@@ -10,4 +10,6 @@ import "github.com/spf13/cobra"
 type ComponentManager interface {
 	GetComponent(name string) Component
 	AddCommand(cmds ...*cobra.Command)
+	WgAdd(delta int)
+	WaitGroup()
 }

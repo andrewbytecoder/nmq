@@ -1,20 +1,18 @@
-package network
+package subscribe
 
 import (
 	"github.com/nmq/interfaces"
-	"github.com/nmq/pkg/network/httpclient"
 	"go.uber.org/zap"
 )
 
-type NetComponent struct {
-	ctx        interfaces.NmqContext
-	log        *zap.Logger
-	httpClient *httpclient.HttpClient
+type SubComponent struct {
+	ctx interfaces.NmqContext
+	log *zap.Logger
 }
 
 // NewNetComponent 创建网络组件实例
-func NewNetComponent(ctx interfaces.NmqContext) *NetComponent {
-	return &NetComponent{
+func NewNetComponent(ctx interfaces.NmqContext) *SubComponent {
+	return &SubComponent{
 		ctx: ctx,
 		log: ctx.GetLogger(),
 	}
@@ -24,7 +22,7 @@ func NewNetComponent(ctx interfaces.NmqContext) *NetComponent {
 //
 // @param uuid string 接口唯一标识
 // @return any 接口实现对象或 nil
-func (nc *NetComponent) GetInterface(uuid string) any {
+func (nc *SubComponent) GetInterface(uuid string) any {
 	return nil
 }
 
@@ -32,9 +30,7 @@ func (nc *NetComponent) GetInterface(uuid string) any {
 //
 // @param ctx NmqContext 上下文环境
 // @return error 错误信息
-func (nc *NetComponent) Init() error {
-	// 创建http客户端
-	nc.httpClient = httpclient.NewHttpClient(nc.ctx)
+func (nc *SubComponent) Init() error {
 
 	return nil
 }
@@ -42,35 +38,35 @@ func (nc *NetComponent) Init() error {
 // Start 启动组件
 //
 // @return error 错误信息
-func (nc *NetComponent) Start() error {
+func (nc *SubComponent) Start() error {
 	return nil
 }
 
 // Stop 停止组件
 //
 // @return error 错误信息
-func (nc *NetComponent) Stop() error {
+func (nc *SubComponent) Stop() error {
 	return nil
 }
 
 // Reset 重置组件
 //
 // @return error 错误信息
-func (nc *NetComponent) Reset() error {
+func (nc *SubComponent) Reset() error {
 	return nil
 }
 
 // GetName 获取组件名称
 //
 // @return string 组件名称
-func (nc *NetComponent) GetName() string {
-	return "network_component"
+func (nc *SubComponent) GetName() string {
+	return "subscribe_component"
 }
 
 // GetVersion 获取组件版本号
 //
 // @return string 版本号
-func (nc *NetComponent) GetVersion() string {
+func (nc *SubComponent) GetVersion() string {
 	return "1.0.0"
 }
 
@@ -78,13 +74,13 @@ func (nc *NetComponent) GetVersion() string {
 //
 // @param event string 事件名称
 // @param data any 附加数据
-func (nc *NetComponent) Notify(event string, data any) {
+func (nc *SubComponent) Notify(event string, data any) {
 	return
 }
 
 // GetStatus 获取组件当前状态
 //
 // @return ComponentStatus 当前状态
-func (nc *NetComponent) GetStatus() interfaces.ComponentStatus {
+func (nc *SubComponent) GetStatus() interfaces.ComponentStatus {
 	return interfaces.ComponentOk
 }

@@ -22,6 +22,7 @@ type Nmq struct {
 	ctx     context.Context
 	cancel  context.CancelFunc
 	rootCmd *cobra.Command
+	wg      sync.WaitGroup // 协程同步
 }
 
 // An Option configures a Logger.
@@ -70,6 +71,7 @@ func NewNcp(op ...Option) *Nmq {
 		return nil
 	}
 
+	ncp.wg.Add(1)
 	return ncp
 }
 
@@ -83,6 +85,16 @@ func (ncp *Nmq) GetComponent(uuid string) interfaces.Component {
 // AddCommand 添加命令
 func (ncp *Nmq) AddCommand(cmds ...*cobra.Command) {
 	ncp.rootCmd.AddCommand(cmds...)
+}
+
+// WgAdd 添加协程
+func (ncp *Nmq) WgAdd(delta int) {
+	ncp.wg.Add(delta)
+}
+
+// WaitGroup 等待所有协程完成
+func (ncp *Nmq) WaitGroup() {
+	ncp.wg.Wait()
 }
 
 // GetComponentManager 获取组件管理器

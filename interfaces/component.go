@@ -51,7 +51,7 @@ type Component interface {
 	//
 	// @param ctx NmqContext 上下文环境
 	// @return error 错误信息
-	Init(ctx NmqContext) error
+	Init() error
 
 	// Start 启动组件
 	//
