@@ -3,13 +3,16 @@ package network
 import (
 	"github.com/nmq/interfaces"
 	"github.com/nmq/pkg/network/httpclient"
+	"github.com/nmq/utils"
 	"go.uber.org/zap"
+	"hash/fnv"
 )
 
 type NetComponent struct {
 	ctx        interfaces.NmqContext
 	log        *zap.Logger
 	httpClient *httpclient.HttpClient
+	snowNode   *utils.SnowNode
 }
 
 // NewNetComponent 创建网络组件实例
@@ -25,6 +28,10 @@ func NewNetComponent(ctx interfaces.NmqContext) *NetComponent {
 // @param uuid string 接口唯一标识
 // @return any 接口实现对象或 nil
 func (nc *NetComponent) GetInterface(uuid string) any {
+	if uuid == "network_snow_flake" {
+		return nc.snowNode
+	}
+
 	return nil
 }
 
@@ -35,6 +42,19 @@ func (nc *NetComponent) GetInterface(uuid string) any {
 func (nc *NetComponent) Init() error {
 	// 创建http客户端
 	nc.httpClient = httpclient.NewHttpClient(nc.ctx)
+	// 创建雪花生成器
+	h := fnv.New64()
+	_, err := h.Write([]byte(nc.GetName()))
+	if err != nil {
+		nc.log.Error("hash error", zap.Error(err))
+		return err
+	}
+
+	nc.snowNode, err = utils.NewSnowNode(int64(h.Sum64()))
+	if err != nil {
+		nc.log.Error("snow node error", zap.Error(err))
+		return err
+	}
 
 	return nil
 }

@@ -251,6 +251,10 @@ func (nmq *Nmq) GetContext() context.Context {
 	return nmq.ctx
 }
 
+func (nmq *Nmq) GetCancel() context.CancelFunc {
+	return nmq.cancel
+}
+
 // GetLogger 获取日志记录器
 func (nmq *Nmq) GetLogger() *zap.Logger {
 	return nmq.logger

@@ -15,6 +15,7 @@ import (
 // 提供对全局 Context、Logger 和组件管理器的访问
 type NmqContext interface {
 	GetContext() context.Context
+	GetCancel() context.CancelFunc
 	GetLogger() *zap.Logger
 	GetComponentManager() ComponentManager
 }
