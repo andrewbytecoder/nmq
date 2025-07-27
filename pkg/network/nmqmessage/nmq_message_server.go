@@ -36,7 +36,7 @@ func NewMessageServer(ctx interfaces.NmqContext, cp interfaces.Component) *Messa
 func (ms *MessageServer) init(network, address string) error {
 	// 创建连接池对象
 	ms.mux.Lock()
-	ms.connections = make(map[net.Conn]net.Conn)
+	ms.connections = make(map[utils.SnowID]net.Conn)
 	ms.mux.Unlock()
 	// 获取雪花生成器
 	snowNode, ok := ms.component.GetInterface("network_snow_flake").(*utils.SnowNode)
@@ -141,6 +141,15 @@ func (ms *MessageServer) Stop() error {
 	if ms.listener != nil {
 		return ms.listener.Close()
 	}
+	// 关闭所有连接
+	ms.mux.Lock()
+	for _, conn := range ms.connections {
+		err := conn.Close()
+		if err != nil {
+			return err
+		}
+	}
+	ms.mux.Unlock()
 
 	return nil
 }
