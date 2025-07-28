@@ -1,6 +1,7 @@
 package nmqmessage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/nmq/interfaces"
@@ -8,8 +9,8 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net"
-	"os"
 	"sync"
+	"time"
 )
 
 type MessageServer struct {
@@ -23,6 +24,9 @@ type MessageServer struct {
 
 	mux         sync.RWMutex // 可以同时获取，但是不能同时写入
 	connections map[utils.SnowID]net.Conn
+
+	msCtx    context.Context    // 消息服务器上下文
+	msCancel context.CancelFunc // 消息服务器取消函数
 }
 
 func NewMessageServer(ctx interfaces.NmqContext, cp interfaces.Component) *MessageServer {
@@ -34,6 +38,9 @@ func NewMessageServer(ctx interfaces.NmqContext, cp interfaces.Component) *Messa
 }
 
 func (ms *MessageServer) init(network, address string) error {
+	ctx, cancel := context.WithCancel(ms.ctx.GetContext())
+	ms.msCtx = ctx
+	ms.msCancel = cancel
 	// 创建连接池对象
 	ms.mux.Lock()
 	ms.connections = make(map[utils.SnowID]net.Conn)
@@ -70,7 +77,6 @@ func (ms *MessageServer) Start(network, address string) error {
 			conn, err := ms.listener.Accept()
 			if err != nil {
 				var opErr *net.OpError
-
 				if errors.As(err, &opErr) && opErr.Timeout() {
 					ms.log.Warn("accept timeout", zap.String("network", network))
 					// 超时继续
@@ -84,29 +90,16 @@ func (ms *MessageServer) Start(network, address string) error {
 			snowId := ms.snowNode.Generate()
 			ms.connections[snowId] = conn
 			ms.mux.Unlock()
-			go ms.handleConnection(conn)
+			go ms.handleConnection(snowId, conn)
 		}
 	}()
-
-	for {
-		select {
-		case conn := <-connChan:
-			// 处理新连接
-			go handleConnection(conn)
-		case err := <-errChan:
-			ms.log.Error("accept error", zap.Error(err))
-		case <-ms.ctx.GetContext().Done():
-			// Context 被取消，退出循环
-			ms.log.Info("context cancelled, stopping server")
-			return ms.ctx.GetContext().Err()
-		}
-	}
 
 	return nil
 }
 
 // 处理客户端连接
 func (ms *MessageServer) handleConnection(snowId utils.SnowID, conn net.Conn) {
+	// 函数退出，关闭所有连接
 	defer conn.Close()
 
 	// 接收二进制数据并写入文件
@@ -114,20 +107,25 @@ func (ms *MessageServer) handleConnection(snowId utils.SnowID, conn net.Conn) {
 	var totalReceived int64
 
 	for {
+		// 设置很短的超时时间，比如1-10毫秒
+		err := conn.SetReadDeadline(time.Now().Add(10 * time.Millisecond))
+		if err != nil {
+			ms.log.Error("set read deadline error", zap.Error(err))
+			return
+		}
 		n, err := conn.Read(buffer)
 		if err != nil {
+			var netErr net.Error
+			if errors.As(err, &netErr) && netErr.Timeout() {
+				// 超时，没有数据，可以执行其他操作
+				continue // 或者 break，取决于业务需求
+			}
 			if err == io.EOF {
+				ms.log.Info("客户端已断开连接")
 				fmt.Printf("客户端断开连接，共接收 %d 字节\n", totalReceived)
 			} else {
 				fmt.Println("读取数据出错:", err)
 			}
-			break
-		}
-
-		// 写入文件
-		written, writeErr := file.Write(buffer[:n])
-		if writeErr != nil {
-			fmt.Println("写入文件失败:", writeErr)
 			break
 		}
 
@@ -141,15 +139,8 @@ func (ms *MessageServer) Stop() error {
 	if ms.listener != nil {
 		return ms.listener.Close()
 	}
-	// 关闭所有连接
-	ms.mux.Lock()
-	for _, conn := range ms.connections {
-		err := conn.Close()
-		if err != nil {
-			return err
-		}
-	}
-	ms.mux.Unlock()
+	// 停止所有数据的接收任务
+	ms.msCancel()
 
 	return nil
 }
