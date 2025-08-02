@@ -2,9 +2,9 @@ package prometheus
 
 import (
 	"fmt"
+	"github.com/nmq/internal/metrics"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"hytera.com/ncp/internal/metrics"
 	"io"
 	"math/rand"
 	"net/http"

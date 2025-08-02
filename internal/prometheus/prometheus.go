@@ -1,8 +1,9 @@
 package prometheus
 
 import (
+	"github.com/nmq/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
-	"hytera.com/ncp/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // Counter implements prometheus.Counter, via prometheus CounterVec
@@ -16,9 +17,7 @@ type Counter struct {
 
 // NewCounterFrom creates a new Counter from a CounterOpts and a list of label names
 func NewCounterFrom(opts prometheus.CounterOpts, labelNames []string) *Counter {
-	cv := prometheus.NewCounterVec(opts, labelNames)
-	prometheus.MustRegister(cv)
-	return NewCounter(cv)
+	return NewCounter(promauto.NewCounterVec(opts, labelNames))
 }
 
 // NewCounter wraps the CounterVec and returns a usable Counter object
@@ -57,9 +56,7 @@ type Gauge struct {
 
 // NewGaugeFrom creates a new Gauge from a GaugeOpts and a list of label names
 func NewGaugeFrom(opts prometheus.GaugeOpts, labelNames []string) *Gauge {
-	gv := prometheus.NewGaugeVec(opts, labelNames)
-	prometheus.MustRegister(gv)
-	return NewGauge(gv)
+	return NewGauge(promauto.NewGaugeVec(opts, labelNames))
 }
 
 // NewGauge wraps the GaugeVec and returns a usable Gauge object
@@ -96,9 +93,7 @@ type Summary struct {
 // NewSummaryFrom constructs and registers a Prometheus SummaryVec,
 // and returns a usable Summary object.
 func NewSummaryFrom(opts prometheus.SummaryOpts, labelNames []string) *Summary {
-	sv := prometheus.NewSummaryVec(opts, labelNames)
-	prometheus.MustRegister(sv)
-	return NewSummary(sv)
+	return NewSummary(promauto.NewSummaryVec(opts, labelNames))
 }
 
 // NewSummary wraps the SummaryVec and returns a usable Summary object
@@ -128,9 +123,7 @@ type Histogram struct {
 // NewHistogramFrom constructs and registers a Prometheus HistogramVec,
 // and returns a usable Histogram object.
 func NewHistogramFrom(opts prometheus.HistogramOpts, labelNames []string) *Histogram {
-	hv := prometheus.NewHistogramVec(opts, labelNames)
-	prometheus.MustRegister(hv)
-	return NewHistogram(hv)
+	return NewHistogram(promauto.NewHistogramVec(opts, labelNames))
 }
 
 // NewHistogram wraps the HistogramVec and returns a usable Histogram object.
