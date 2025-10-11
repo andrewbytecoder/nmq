@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/nmq/interfaces"
-	"github.com/nmq/utils"
-	"go.uber.org/zap"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/nmq/interfaces"
+	"github.com/nmq/pkg/utils"
+	"go.uber.org/zap"
 )
 
 type MessageServer struct {

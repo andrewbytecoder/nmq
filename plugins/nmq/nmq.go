@@ -3,13 +3,14 @@ package nmq
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/nmq/interfaces"
-	"github.com/nmq/utils"
+	"github.com/nmq/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"sync"
 )
 
 // Nmq 组件管理器

@@ -1,10 +1,11 @@
 package httpclient
 
 import (
-	"github.com/nmq/interfaces"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
+
+	"github.com/nmq/interfaces"
+	"go.uber.org/zap"
 )
 
 type HttpClient struct {

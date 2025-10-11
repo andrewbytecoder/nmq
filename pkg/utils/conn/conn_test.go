@@ -2,11 +2,12 @@ package conn
 
 import (
 	"errors"
-	"go.uber.org/zap"
 	"net"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 func TestManager(t *testing.T) {

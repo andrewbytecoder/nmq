@@ -2,10 +2,11 @@ package conn
 
 import (
 	"errors"
-	"go.uber.org/zap"
 	"math/rand"
 	"net"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Dialer imitates net.Dial. Dialer is assumed to yield connections that are

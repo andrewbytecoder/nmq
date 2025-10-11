@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/nmq/pkg/nmq"
+
+	"github.com/nmq/plugins/nmq"
 	"github.com/spf13/cobra"
 )
 

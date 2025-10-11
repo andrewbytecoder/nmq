@@ -1,11 +1,12 @@
 package network
 
 import (
-	"github.com/nmq/interfaces"
-	"github.com/nmq/pkg/network/httpclient"
-	"github.com/nmq/utils"
-	"go.uber.org/zap"
 	"hash/fnv"
+
+	"github.com/nmq/interfaces"
+	"github.com/nmq/pkg/utils"
+	"github.com/nmq/plugins/network/httpclient"
+	"go.uber.org/zap"
 )
 
 type NetComponent struct {
