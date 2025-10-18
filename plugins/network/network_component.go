@@ -4,8 +4,8 @@ import (
 	"hash/fnv"
 
 	"github.com/nmq/interfaces"
+	"github.com/nmq/pkg/httpclient"
 	"github.com/nmq/pkg/utils"
-	"github.com/nmq/plugins/network/httpclient"
 	"go.uber.org/zap"
 )
 
