@@ -1,4 +1,4 @@
-module github.com/nmq
+module github.com/andrewbytecoder/nmq
 
 go 1.25.1
 

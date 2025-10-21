@@ -3,7 +3,7 @@ package localcache
 import (
 	"fmt"
 
-	"hytera.com/ncp/pkg/options"
+	"github.com/andrewbytecoder/nmq/pkg/options"
 )
 
 // Config 本地缓存配置结构体

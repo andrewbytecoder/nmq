@@ -1,6 +1,6 @@
 package prometheus
 
-import "github.com/nmq/internal/metrics"
+import "github.com/andrewbytecoder/nmq/internal/metrics"
 
 type counterHistogram struct {
 	c metrics.Counter

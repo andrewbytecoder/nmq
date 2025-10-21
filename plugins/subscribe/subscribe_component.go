@@ -1,7 +1,7 @@
 package subscribe
 
 import (
-	"github.com/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/interfaces"
 	"go.uber.org/zap"
 )
 

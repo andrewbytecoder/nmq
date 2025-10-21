@@ -1,7 +1,7 @@
 package network
 
 import (
-	"github.com/nmq/pkg/utils"
+	"github.com/andrewbytecoder/nmq/pkg/utils"
 )
 
 // interface uuid: network_snow_flake

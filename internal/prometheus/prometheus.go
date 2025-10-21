@@ -1,7 +1,7 @@
 package prometheus
 
 import (
-	"github.com/nmq/internal/metrics"
+	"github.com/andrewbytecoder/nmq/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )

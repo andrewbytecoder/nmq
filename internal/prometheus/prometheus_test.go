@@ -2,7 +2,7 @@ package prometheus
 
 import (
 	"fmt"
-	"github.com/nmq/internal/metrics"
+	"github.com/andrewbytecoder/nmq/internal/metrics"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"

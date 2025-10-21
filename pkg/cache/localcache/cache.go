@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"hytera.com/ncp/pkg/options"
+	"github.com/andrewbytecoder/nmq/pkg/options"
 )
 
 // cache 本地缓存结构体，包含缓存数据和相关配置

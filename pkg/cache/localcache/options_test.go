@@ -4,7 +4,7 @@ package localcache
 import (
 	"testing"
 
-	"hytera.com/ncp/pkg/options"
+	"github.com/andrewbytecoder/nmq/pkg/options"
 )
 
 func TestConfigStruct(t *testing.T) {

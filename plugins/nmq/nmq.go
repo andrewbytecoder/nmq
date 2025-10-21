@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/nmq/interfaces"
-	"github.com/nmq/pkg/utils"
+	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"

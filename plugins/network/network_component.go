@@ -3,9 +3,9 @@ package network
 import (
 	"hash/fnv"
 
-	"github.com/nmq/interfaces"
-	"github.com/nmq/pkg/httpclient"
-	"github.com/nmq/pkg/utils"
+	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/pkg/httpclient"
+	"github.com/andrewbytecoder/nmq/pkg/utils"
 	"go.uber.org/zap"
 )
 

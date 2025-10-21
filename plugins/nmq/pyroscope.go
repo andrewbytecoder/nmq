@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/andrewbytecoder/nmq/pkg/check"
 	"github.com/grafana/pyroscope-go"
-	"github.com/nmq/pkg/check"
 )
 
 func startPyroscope() error {

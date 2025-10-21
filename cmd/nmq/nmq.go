@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nmq/interfaces"
-	"github.com/nmq/pkg/utils"
-	"github.com/nmq/plugins/network"
-	"github.com/nmq/plugins/nmq"
+	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/pkg/utils"
+	"github.com/andrewbytecoder/nmq/plugins/network"
+	"github.com/andrewbytecoder/nmq/plugins/nmq"
 	"go.uber.org/zap/zapcore"
 )
 
