@@ -41,9 +41,6 @@ func (nc *NetComponent) GetInterface(uuid string) any {
 // @param ctx NmqContext 上下文环境
 // @return error 错误信息
 func (nc *NetComponent) Init() error {
-	// 创建http客户端
-	nc.httpClient = httpclient.NewHttpClient(nc.ctx)
-	// 创建雪花生成器
 	h := fnv.New64()
 	_, err := h.Write([]byte(nc.GetName()))
 	if err != nil {
@@ -85,7 +82,7 @@ func (nc *NetComponent) Reset() error {
 //
 // @return string 组件名称
 func (nc *NetComponent) GetName() string {
-	return "network_component"
+	return interfaces.NetworkComponentName
 }
 
 // GetVersion 获取组件版本号

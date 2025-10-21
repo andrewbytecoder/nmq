@@ -24,55 +24,20 @@ type Nmq struct {
 	cancel  context.CancelFunc
 	rootCmd *cobra.Command
 	wg      sync.WaitGroup // 协程同步
+	cfg     *Config
 }
 
-// An Option configures a Logger.
-type Option interface {
-	apply(*Nmq)
-}
-
-// optionFunc wraps a func so it satisfies the Option interface.
-type optionFunc func(*Nmq)
-
-// apply applies the Option to the given Nmq.
-func (f optionFunc) apply(n *Nmq) {
-	f(n)
-}
-
-// SetContext 设置日志文件名
-func SetContext(ctx context.Context) Option {
-	return optionFunc(func(n *Nmq) {
-		n.ctx = ctx
-	})
-}
-
-// SetCancel 设置取消函数
-func SetCancel(cancel context.CancelFunc) Option {
-	return optionFunc(func(n *Nmq) {
-		n.cancel = cancel
-	})
-}
-
-// SetLogger 设置日志记录器
-func SetLogger(logger *zap.Logger) Option {
-	return optionFunc(func(n *Nmq) {
-		n.logger = logger
-	})
-}
-
-// NewNcp 创建一个组件管理器
-func NewNcp(op ...Option) *Nmq {
-	nmq := &Nmq{}
+// NewNmq 创建一个组件管理器
+func NewNmq(op ...Option) *Nmq {
+	nmq := &Nmq{
+		cfg: DefaultConfig(),
+	}
 	for _, opt := range op {
 		opt.apply(nmq)
 	}
 
-	err := nmq.Init()
-	if err != nil {
-		return nil
-	}
+	nmq.components = make(map[string]interfaces.Component)
 
-	nmq.wg.Add(1)
 	return nmq
 }
 
@@ -116,7 +81,6 @@ func (nmq *Nmq) GetInterface(uuid string) any {
 
 // Init 初始化组件
 func (nmq *Nmq) Init() error {
-	nmq.components = make(map[string]interfaces.Component)
 	// 将自身注册进组件
 	nmq.RegisterComponent(nmq.GetName(), nmq)
 	// 没有指定日志记录器的情况下，创建默认日志记录器
@@ -141,7 +105,7 @@ func (nmq *Nmq) Init() error {
 	if nmq.rootCmd == nil {
 		nmq.rootCmd = &cobra.Command{
 			Use:   "nmq",
-			Short: "NCP is a component manager",
+			Short: "nmq is a component manager",
 			Run: func(cmd *cobra.Command, args []string) {
 				err := cmd.Help()
 				if err != nil {
@@ -179,6 +143,12 @@ func (nmq *Nmq) Init() error {
 
 // Start 启动组件
 func (nmq *Nmq) Start() error {
+	// 加载ncp各种辅助代理
+	err := loadAgentByConfig(nmq.cfg)
+	if err != nil {
+		return err
+	}
+
 	for _, component := range nmq.components {
 		if component.GetName() == "nmq" {
 			continue
@@ -263,31 +233,36 @@ func (nmq *Nmq) GetLogger() *zap.Logger {
 
 // Execute 运行组件
 func (nmq *Nmq) Execute() error {
-
-	nmq.logger.Info("Starting NCP")
-	err := nmq.Start()
+	err := nmq.Init()
 	if err != nil {
-		nmq.logger.Error("Failed to start NCP", zap.Error(err))
+		fmt.Printf("Failed to init nmq, err: %s", err.Error())
 		return err
 	}
-	defer nmq.logger.Info("Waiting for NCP to exit")
+
+	nmq.logger.Info("Starting nmq")
+	err = nmq.Start()
+	if err != nil {
+		nmq.logger.Error("Failed to start nmq", zap.Error(err))
+		return err
+	}
+	defer nmq.logger.Info("Waiting for nmq to exit")
 	if err = nmq.rootCmd.Execute(); err != nil {
-		nmq.logger.Error("Failed to execute NCP", zap.Error(err))
+		nmq.logger.Error("Failed to execute nmq", zap.Error(err))
 		return err
 	}
 	// 停止所有协程
 	err = nmq.Stop()
 	if err != nil {
-		nmq.logger.Error("Failed to stop NCP", zap.Error(err))
+		nmq.logger.Error("Failed to stop nmq", zap.Error(err))
 		return err
 	}
 	// 清理资源
 	err = nmq.Reset()
 	if err != nil {
-		nmq.logger.Error("Failed to reset NCP", zap.Error(err))
+		nmq.logger.Error("Failed to reset nmq", zap.Error(err))
 		return err
 	}
-	nmq.logger.Info("Exit NCP")
+	nmq.logger.Info("Exit nmq")
 	return nil
 }
 

@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -10,6 +12,7 @@ type LogConfig struct {
 	lumberjackLogger *lumberjack.Logger // 文件日志写入器，支持自动切割
 	level            zapcore.Level      // 日志输出级别（debug/info/warn/error/fatal
 	levelKey         string             // JSON 输出中表示日志级别的字段名。
+	consoleWriter    bool               // 是否将日志输出到控制台
 }
 
 // An Option configures a Logger.
@@ -73,6 +76,12 @@ func SetLogLevelKey(levelKey string) Option {
 	})
 }
 
+func SetConsoleWriterSyncer(consoleWriter bool) Option {
+	return optionFunc(func(c *LogConfig) {
+		c.consoleWriter = consoleWriter
+	})
+}
+
 // CreateProductZapLogger 创建一个生产级别的 zap 日志记录器。
 func CreateProductZapLogger(op ...Option) (*zap.Logger, error) {
 	logConfig := &LogConfig{
@@ -84,13 +93,23 @@ func CreateProductZapLogger(op ...Option) (*zap.Logger, error) {
 	}
 
 	// 创建 zap 的核心配置
-	writeSyncer := zapcore.AddSync(logConfig.lumberjackLogger)
+	fileWriteSyncer := zapcore.AddSync(logConfig.lumberjackLogger)
+
+	var multiWriteSyncer zapcore.WriteSyncer
+	// 组合写入器
+	if logConfig.consoleWriter {
+		consoleWriteSyncer := zapcore.AddSync(os.Stdout)
+		multiWriteSyncer = zapcore.NewMultiWriteSyncer(fileWriteSyncer, consoleWriteSyncer)
+	} else {
+		multiWriteSyncer = zapcore.NewMultiWriteSyncer(fileWriteSyncer)
+	}
+
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式
 	encoderConfig.LevelKey = logConfig.levelKey
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig), // 使用 JSON 格式编码日志
-		writeSyncer,
+		multiWriteSyncer,
 		logConfig.level, // 设置日志级别
 	)
 
