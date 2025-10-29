@@ -19,6 +19,13 @@ type NmqContext interface {
 	GetCancel() context.CancelFunc
 	GetLogger() *zap.Logger
 	GetComponentManager() ComponentManager
+	GetInterface(uuid string) any
+	Notify(event string, data any)
+}
+
+type NmqBase struct {
+	ctx NmqContext
+	log *zap.Logger
 }
 
 // ComponentStatus 表示组件的生命周期状态
