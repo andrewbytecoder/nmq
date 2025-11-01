@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/fatih/color v1.18.0
 	github.com/google/gops v0.3.28
+	github.com/gorilla/websocket v1.5.3
 	github.com/grafana/pyroscope-go v1.2.7
 	github.com/prometheus/client_golang v1.23.0
 	github.com/spf13/cobra v1.9.1

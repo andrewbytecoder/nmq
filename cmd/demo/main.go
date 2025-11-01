@@ -2,17 +2,17 @@ package main
 
 import "fmt"
 
-func getBUffer() []byte {
-
-	return nil
-}
-
 func main() {
 
-	var data []byte
-	data = nil
+	var data map[string]string
 
-	length := len(data)
+	data = map[string]string{
+		"key1": "value1",
+		"key2": "value2",
+	}
 
-	fmt.Println(length)
+	for k := range data {
+		fmt.Println(k)
+	}
+
 }
