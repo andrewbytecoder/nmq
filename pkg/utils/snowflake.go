@@ -322,7 +322,7 @@ func (f SnowID) Time() int64 {
 	return (int64(f) >> timeShift) + Epoch
 }
 
-// Node returns an int64 of the snowflake SnowID node number
+// Node SnowNode returns an int64 of the snowflake SnowID node number
 // DEPRECATED: the below function will be removed in a future release.
 func (f SnowID) Node() int64 {
 	return int64(f) & nodeMask >> nodeShift

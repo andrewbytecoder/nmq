@@ -4,20 +4,21 @@ import (
 	"hash/fnv"
 
 	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/interfaces/nmq"
 	"github.com/andrewbytecoder/nmq/pkg/httpclient"
 	"github.com/andrewbytecoder/nmq/pkg/utils"
 	"go.uber.org/zap"
 )
 
 type NetComponent struct {
-	ctx        interfaces.NmqContext
+	ctx        nmq.NmqContext
 	log        *zap.Logger
 	httpClient *httpclient.HttpClient
 	snowNode   *utils.SnowNode
 }
 
 // NewNetComponent 创建网络组件实例
-func NewNetComponent(ctx interfaces.NmqContext) *NetComponent {
+func NewNetComponent(ctx nmq.NmqContext) *NetComponent {
 	return &NetComponent{
 		ctx: ctx,
 		log: ctx.GetLogger(),
@@ -103,6 +104,6 @@ func (nc *NetComponent) Notify(event string, data any) {
 // GetStatus 获取组件当前状态
 //
 // @return ComponentStatus 当前状态
-func (nc *NetComponent) GetStatus() interfaces.ComponentStatus {
-	return interfaces.ComponentOk
+func (nc *NetComponent) GetStatus() nmq.ComponentStatus {
+	return nmq.ComponentOk
 }

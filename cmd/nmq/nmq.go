@@ -24,7 +24,7 @@ func main() {
 	log, err := utils.CreateProductZapLogger(utils.SetLogLevel(zapcore.DebugLevel),
 		utils.SetLogMaxSize(50), utils.SetLogMaxBackups(2),
 		utils.SetLogMaxAge(30), utils.SetLogCompress(true),
-		utils.SetLogFilename("./log/dp-proxy.log"), utils.SetLogLevelKey("dp-proxy"),
+		utils.SetLogFilename("./log/nmq.log"), utils.SetLogLevelKey("nmq"),
 		utils.SetConsoleWriterSyncer(true))
 	if err != nil {
 		fmt.Println("Failed to create logger")
