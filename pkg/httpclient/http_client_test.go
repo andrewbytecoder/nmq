@@ -112,7 +112,7 @@ func TestHttpClient_Send_NetworkError(t *testing.T) {
 
 	_, err = client.Send(req, 1*time.Second)
 	if err == nil {
-		t.Fatal("Expected network error, got nil")
+		t.Fatal("Expected api error, got nil")
 	}
 }
 

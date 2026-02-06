@@ -6,7 +6,7 @@ import (
 
 	"github.com/andrewbytecoder/nmq/interfaces"
 	"github.com/andrewbytecoder/nmq/pkg/utils"
-	"github.com/andrewbytecoder/nmq/plugins/network"
+	"github.com/andrewbytecoder/nmq/plugins/api"
 	"github.com/andrewbytecoder/nmq/plugins/nmq"
 	"go.uber.org/zap/zapcore"
 )
@@ -46,5 +46,5 @@ func main() {
 
 func RegisterComponents(nmq *nmq.Nmq) {
 	// 注册网络插件
-	nmq.RegisterComponent(interfaces.NetworkComponentName, network.NewNetComponent(nmq))
+	nmq.RegisterComponent(interfaces.NetworkComponentName, api.NewNetComponent(nmq))
 }

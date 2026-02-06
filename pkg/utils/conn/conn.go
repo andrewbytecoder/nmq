@@ -18,7 +18,7 @@ type AfterFunc func(time.Duration) <-chan time.Time
 
 // Manager manages a net.Conn.
 //
-// Clients provide a way to create the connection with a Dialer, network, and
+// Clients provide a way to create the connection with a Dialer, api, and
 // address. Clients should Take the connection when they want to use it, and Put
 // back whatever error they receive from its use. When a non-nil error is Put,
 // the connection is invalidated, and a new connection is established.
@@ -34,7 +34,7 @@ type Manager struct {
 	putc  chan error
 }
 
-// NewManager returns a connection manager using the passed Dialer, network, and
+// NewManager returns a connection manager using the passed Dialer, api, and
 // address. The AfterFunc is used to control exponential backoff and retries.
 // The logger is used to log errors; pass a log.NopLogger if you don't care to
 // receive them. For normal use, prefer NewDefaultManager.

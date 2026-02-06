@@ -1,4 +1,4 @@
-// E:\work\ncp\pkg\network\addr\addr_test.go
+// E:\work\ncp\pkg\api\addr\addr_test.go
 package addr
 
 import (
