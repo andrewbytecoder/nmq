@@ -3,6 +3,7 @@ package nmq
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"sync"
 
@@ -22,12 +23,14 @@ type Nmq struct {
 	mux        sync.RWMutex             // for components
 	components map[string]nmq.Component // component name to component
 
-	logger  *zap.Logger
-	ctx     context.Context
-	cancel  context.CancelFunc
-	rootCmd *cobra.Command
-	wg      sync.WaitGroup // 协程同步
-	cfg     *Config
+	logger      *zap.Logger
+	atomicLevel zap.AtomicLevel // 日志原子级别，支持运行时动态修改
+	debugServer *http.Server    // 调试 HTTP 服务
+	ctx         context.Context
+	cancel      context.CancelFunc
+	rootCmd     *cobra.Command
+	wg          sync.WaitGroup // 协程同步
+	cfg         *Config
 
 	pool *ants.Pool
 }
@@ -44,7 +47,7 @@ func NewNmq(op ...Option) *Nmq {
 	n.components = make(map[string]nmq.Component)
 	// 没有指定日志记录器的情况下，创建默认日志记录器
 	if n.logger == nil {
-		log, err := utils.CreateProductZapLogger(utils.SetLogLevel(zapcore.DebugLevel),
+		log, atomicLevel, err := utils.CreateProductZapLogger(utils.SetLogLevel(zapcore.DebugLevel),
 			utils.SetLogMaxSize(50), utils.SetLogMaxBackups(2),
 			utils.SetLogMaxAge(30), utils.SetLogCompress(true),
 			utils.SetLogFilename("./log/ncp.log"), utils.SetLogLevelKey("info"))
@@ -53,6 +56,7 @@ func NewNmq(op ...Option) *Nmq {
 			return nil
 		}
 		n.logger = log
+		n.atomicLevel = atomicLevel
 	}
 
 	if n.ctx == nil {
@@ -217,6 +221,9 @@ func (nmq *Nmq) Start() error {
 		return err
 	}
 
+	// 启动调试 HTTP 服务（用于动态修改日志等级等）
+	startDebugServer(nmq)
+
 	// 启动协程池
 	nmq.pool, err = ants.NewPool(1000, ants.WithPanicHandler(func(err interface{}) {
 		nmq.logger.Error("panic", zap.Any("panic", err))
@@ -243,6 +250,9 @@ func (nmq *Nmq) Start() error {
 func (nmq *Nmq) Stop() error {
 
 	nmq.cancel()
+
+	// 停止调试 HTTP 服务
+	stopDebugServer(nmq)
 
 	for _, component := range nmq.components {
 		if component.GetName() == nmq.GetName() {
@@ -332,6 +342,23 @@ func (nmq *Nmq) GetCancel() context.CancelFunc {
 // GetLogger 获取日志记录器
 func (nmq *Nmq) GetLogger() *zap.Logger {
 	return nmq.logger
+}
+
+// SetLogLevel 动态设置日志等级（支持运行时修改）
+// 可接受的等级字符串: debug, info, warn, error, dpanic, panic, fatal
+func (nmq *Nmq) SetLogLevel(levelStr string) error {
+	var level zapcore.Level
+	if err := level.UnmarshalText([]byte(levelStr)); err != nil {
+		return fmt.Errorf("invalid log level %q: %w", levelStr, err)
+	}
+	nmq.atomicLevel.SetLevel(level)
+	nmq.logger.Info("log level changed", zap.String("level", level.String()))
+	return nil
+}
+
+// GetLogLevel 获取当前日志等级
+func (nmq *Nmq) GetLogLevel() string {
+	return nmq.atomicLevel.Level().String()
 }
 
 // Execute 运行组件

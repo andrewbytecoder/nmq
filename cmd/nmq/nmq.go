@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/andrewbytecoder/nmq/interfaces"
 	"github.com/andrewbytecoder/nmq/pkg/utils"
-	"github.com/andrewbytecoder/nmq/plugins/api"
 	"github.com/andrewbytecoder/nmq/plugins/nmq"
 	"go.uber.org/zap/zapcore"
 )
@@ -21,7 +19,7 @@ func main() {
 	fmt.Printf("Current working directory: %s\n", dir)
 
 	// 创建日志记录器， 每个 50M, 两个备份，最多三个，备份日志最长保存30天，压缩备份日志
-	log, err := utils.CreateProductZapLogger(utils.SetLogLevel(zapcore.DebugLevel),
+	log, atomicLevel, err := utils.CreateProductZapLogger(utils.SetLogLevel(zapcore.DebugLevel),
 		utils.SetLogMaxSize(50), utils.SetLogMaxBackups(2),
 		utils.SetLogMaxAge(30), utils.SetLogCompress(true),
 		utils.SetLogFilename("./log/nmq.log"), utils.SetLogLevelKey("nmq"),
@@ -32,9 +30,11 @@ func main() {
 	}
 
 	run := nmq.NewNmq(
-		nmq.SetLogger(log),           // 赋能日志记录器
-		nmq.SetEnableGoPs(true),      // 赋能gops
-		nmq.SetEnablePyroscope(true), // 赋能pyroscope
+		nmq.SetLogger(log),              // 赋能日志记录器
+		nmq.SetAtomicLevel(atomicLevel), // 设置日志原子级别，支持运行时动态修改
+		nmq.SetDebugPort(6060),          // 调试端口，用于动态日志等级等
+		nmq.SetEnableGoPs(true),         // 赋能gops
+		nmq.SetEnablePyroscope(true),    // 赋能pyroscope
 	)
 	RegisterComponents(run)
 	err = run.Execute()
@@ -46,5 +46,4 @@ func main() {
 
 func RegisterComponents(nmq *nmq.Nmq) {
 	// 注册网络插件
-	nmq.RegisterComponent(interfaces.NetworkComponentName, api.NewNetComponent(nmq))
 }

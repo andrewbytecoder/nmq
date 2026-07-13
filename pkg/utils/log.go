@@ -83,7 +83,8 @@ func SetConsoleWriterSyncer(consoleWriter bool) Option {
 }
 
 // CreateProductZapLogger 创建一个生产级别的 zap 日志记录器。
-func CreateProductZapLogger(op ...Option) (*zap.Logger, error) {
+// 返回的 zap.AtomicLevel 可用于运行时动态修改日志等级。
+func CreateProductZapLogger(op ...Option) (*zap.Logger, zap.AtomicLevel, error) {
 	logConfig := &LogConfig{
 		lumberjackLogger: &lumberjack.Logger{},
 	}
@@ -107,13 +108,16 @@ func CreateProductZapLogger(op ...Option) (*zap.Logger, error) {
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder // 时间格式
 	encoderConfig.LevelKey = logConfig.levelKey
+
+	// 使用 AtomicLevel 替代静态 Level，支持运行时动态修改
+	atomicLevel := zap.NewAtomicLevelAt(logConfig.level)
 	core := zapcore.NewCore(
 		zapcore.NewJSONEncoder(encoderConfig), // 使用 JSON 格式编码日志
 		multiWriteSyncer,
-		logConfig.level, // 设置日志级别
+		atomicLevel,
 	)
 
 	// 创建 zap logger
 	logger := zap.New(core, zap.AddCaller()) // 添加调用者信息
-	return logger, nil
+	return logger, atomicLevel, nil
 }

@@ -7,6 +7,7 @@ type Config struct {
 	configFile      string // 配置文件
 	certPath        string // 证书路径
 	workDir         string // 当前工作目录
+	debugPort       int    // 调试端口，0 表示不启动
 }
 
 func DefaultConfig() *Config {
@@ -14,6 +15,7 @@ func DefaultConfig() *Config {
 		enableGoPs:      false,
 		enablePyroscope: false,
 		poolNumber:      10,
+		debugPort:       0,
 	}
 }
 
@@ -29,5 +31,10 @@ func (c *Config) setPyroscope(enablePyroscope bool) *Config {
 
 func (c *Config) setPoolNumber(poolNumber int) *Config {
 	c.poolNumber = poolNumber
+	return c
+}
+
+func (c *Config) setDebugPort(port int) *Config {
+	c.debugPort = port
 	return c
 }

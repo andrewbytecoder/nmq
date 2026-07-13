@@ -40,6 +40,21 @@ func SetLogger(logger *zap.Logger) Option {
 	})
 }
 
+// SetAtomicLevel 设置日志原子级别，用于运行时动态修改日志等级
+func SetAtomicLevel(atomicLevel zap.AtomicLevel) Option {
+	return optionFunc(func(n *Nmq) {
+		n.atomicLevel = atomicLevel
+	})
+}
+
+// SetDebugPort 设置调试端口，用于运行时动态修改日志等级
+// 端口为 0 时不启动调试 HTTP 服务
+func SetDebugPort(port int) Option {
+	return optionFunc(func(n *Nmq) {
+		n.cfg.setDebugPort(port)
+	})
+}
+
 func SetEnableGoPs(enableGoPs bool) Option {
 	return optionFunc(func(n *Nmq) {
 		n.cfg.setGoPs(enableGoPs)
