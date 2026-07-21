@@ -1,0 +1,17 @@
+FROM node:24-alpine3.22
+
+ENV WEBUI_DIR=/src/webui
+RUN mkdir -p $WEBUI_DIR
+
+COPY package*.json $WEBUI_DIR/
+
+ENV VITE_APP_BASE_URL=""
+ENV VITE_APP_BASE_API_URL="/api"
+
+WORKDIR $WEBUI_DIR
+
+RUN npm install
+
+COPY . $WEBUI_DIR/
+
+EXPOSE 8080
