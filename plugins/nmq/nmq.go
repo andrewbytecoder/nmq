@@ -10,6 +10,7 @@ import (
 	"github.com/andrewbytecoder/nmq/interfaces"
 	"github.com/andrewbytecoder/nmq/interfaces/nmq"
 	"github.com/andrewbytecoder/nmq/pkg/utils"
+	"github.com/andrewbytecoder/nmq/plugins/mq"
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -180,12 +181,21 @@ func (nmq *Nmq) GetComponentManager() nmq.ComponentManager {
 // GetInterface 获取接口
 func (nmq *Nmq) GetInterface(uuid string) any {
 	for _, component := range nmq.components {
+		if component.GetName() == nmq.GetName() {
+			continue
+		}
 		f := component.GetInterface(uuid)
 		if f != nil {
 			return f
 		}
 	}
 	return nil
+}
+
+func (nmq *Nmq) RegisterComponents() {
+	// 注册组件
+	messageQueueComponent := mq.NewNetComponent(nmq)
+	nmq.components[messageQueueComponent.GetName()] = messageQueueComponent
 }
 
 // Init 初始化组件
@@ -198,9 +208,11 @@ func (nmq *Nmq) Init() error {
 	}
 	viper.SetConfigType("yaml")
 
+	// 注册组件
+
 	for _, component := range nmq.components {
 		// 自己不能初始化自己
-		if component.GetName() == "nmq" {
+		if component.GetName() == nmq.GetName() {
 			continue
 		}
 		err := component.Init()

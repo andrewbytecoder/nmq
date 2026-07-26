@@ -36,14 +36,9 @@ func main() {
 		nmq.SetEnableGoPs(true),         // 赋能gops
 		nmq.SetEnablePyroscope(true),    // 赋能pyroscope
 	)
-	RegisterComponents(run)
 	err = run.Execute()
 	if err != nil {
 		fmt.Println("Failed to execute nmq")
 		return
 	}
-}
-
-func RegisterComponents(nmq *nmq.Nmq) {
-	// 注册网络插件
 }
