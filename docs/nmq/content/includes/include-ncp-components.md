@@ -1,0 +1,5 @@
+- `ncp`: 根组件与运行时容器。
+- `dpcore`: 存储、部署器、Helm、微平台客户端。
+- `dpproxy`: API 入口、业务控制面、登录与升级流程。
+- `network`: HTTP 客户端等基础网络能力。
+- `webui`: Dashboard、路由视图、SQLite 只读接口。

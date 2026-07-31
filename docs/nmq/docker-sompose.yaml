@@ -1,0 +1,12 @@
+
+# 将当前目录挂载到容器的 /docs 目录下，进行mkdoc渲染
+services:
+  mkdocs:
+    image: squidfunk/mkdocs-material:9
+    container_name: mkdocs-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/docs
+    command: serve -a 0.0.0.0:8000
+    restart: unless-stopped

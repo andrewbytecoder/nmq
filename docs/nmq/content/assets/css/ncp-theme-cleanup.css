@@ -1,0 +1,75 @@
+#ot-sdk-btn-floating,
+.ot-floating-button,
+.ot-floating-button__front,
+[id*="silktide" i],
+[class*="silktide" i],
+iframe[src*="silktide" i],
+[aria-label="Privacy Settings"],
+[title="Privacy Settings"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+header-app,
+.header-container__mobile,
+header.md-header + div[style*="height:64px"] {
+  display: none !important;
+}
+
+.product-switcher .nav-dropdown-menu,
+.product-switcher .icon,
+.product-switcher img {
+  display: none !important;
+}
+
+.product-switcher {
+  min-height: 3rem;
+}
+
+.product-switcher .menu-item {
+  pointer-events: none !important;
+  cursor: default !important;
+  user-select: none !important;
+}
+
+.product-switcher .menu-item.ncp-product-switcher__label {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0.6rem 0.75rem !important;
+  font-size: 0 !important;
+  text-decoration: none !important;
+}
+
+.product-switcher .menu-item.ncp-product-switcher__label::before {
+  content: "NCP";
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  color: #0f1f44 !important;
+}
+
+.ncp-static-label {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.ncp-static-label svg,
+.ncp-static-label img {
+  display: none !important;
+}
+
+body,
+input,
+button,
+select,
+textarea {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", Helvetica, Arial,
+    sans-serif !important;
+}
+
+code,
+kbd,
+pre {
+  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, "Liberation Mono",
+    Menlo, monospace !important;
+}
