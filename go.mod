@@ -19,6 +19,7 @@ require (
 	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.19.0
+	google.golang.org/grpc v1.67.3
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 

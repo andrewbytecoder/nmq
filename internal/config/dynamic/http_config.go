@@ -2,7 +2,7 @@ package dynamic
 
 import (
 	"github.com/andrewbytecoder/nmq/pkg/types"
-	"github.com/golang/protobuf/types"
+	"google.golang.org/grpc/codes"
 )
 
 // +k8s:deepcopy-gen=true
@@ -17,6 +17,83 @@ type Service struct {
 	Failover            *Failover            `json:"failover,omitempty" toml:"failover,omitempty" yaml:"failover,omitempty" label:"-" export:"true"`
 }
 
+// +k8s:deepcopy-gen=true
+
+// Failover holds the Failover configuration.
+type Failover struct {
+	Service     string         `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Fallback    string         `json:"fallback,omitempty" toml:"fallback,omitempty" yaml:"fallback,omitempty" export:"true"`
+	HealthCheck *HealthCheck   `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" export:"true"`
+	Errors      *FailoverError `json:"errors,omitempty" toml:"errors,omitempty" yaml:"errors,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// FailoverError holds errors configuration.
+type FailoverError struct {
+	MaxRequestBodyBytes *int64   `json:"maxRequestBodyBytes,omitempty" toml:"maxRequestBodyBytes,omitempty" yaml:"maxRequestBodyBytes,omitempty" export:"true"`
+	Status              []string `json:"status,omitempty" toml:"status,omitempty" yaml:"status,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// MirrorService holds the MirrorService configuration.
+type MirrorService struct {
+	Name    string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Percent int    `json:"percent,omitempty" toml:"percent,omitempty" yaml:"percent,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Mirroring holds the Mirroring configuration.
+type Mirroring struct {
+	Service     string          `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	MirrorBody  *bool           `json:"mirrorBody,omitempty" toml:"mirrorBody,omitempty" yaml:"mirrorBody,omitempty" export:"true"`
+	MaxBodySize *int64          `json:"maxBodySize,omitempty" toml:"maxBodySize,omitempty" yaml:"maxBodySize,omitempty" export:"true"`
+	Mirrors     []MirrorService `json:"mirrors,omitempty" toml:"mirrors,omitempty" yaml:"mirrors,omitempty" export:"true"`
+	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// WRRService is a reference to a service load-balanced with weighted round-robin.
+type WRRService struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+
+	// Headers defines the HTTP headers that should be added to the request when calling the service.
+	// This is required by the Knative implementation which expects specific headers to be sent.
+	Headers map[string]string `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+
+	// Status defines an HTTP status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific HTTP status to be returned.
+	Status *int `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	// GRPCStatus defines a GRPC status code that should be returned when calling the service.
+	// This is required by the Gateway API implementation which expects specific GRPC status to be returned.
+	GRPCStatus *GRPCStatus `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+type GRPCStatus struct {
+	Code codes.Code `json:"code,omitempty" toml:"code,omitempty" yaml:"code,omitempty" export:"true"`
+	Msg  string     `json:"msg,omitempty" toml:"msg,omitempty" yaml:"msg,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// WeightedRoundRobin is a weighted round robin load-balancer of services.
+type WeightedRoundRobin struct {
+	Services []WRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	Sticky   *Sticky      `json:"sticky,omitempty" toml:"sticky,omitempty" yaml:"sticky,omitempty" export:"true"`
+	// HealthCheck enables automatic self-healthcheck for this service, i.e.
+	// whenever one of its children is reported as down, this service becomes aware of it,
+	// and takes it into account (i.e. it ignores the down child) when running the
+	// load-balancing algorithm. In addition, if the parent of this service also has
+	// HealthCheck enabled, this service reports to its parent any status change.
+	HealthCheck *HealthCheck `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
 type BalancerStrategy string
 
 const (
@@ -29,6 +106,8 @@ const (
 	// BalancerStrategyLeastTime is the least-time strategy.
 	BalancerStrategyLeastTime BalancerStrategy = "leasttime"
 )
+
+// +k8s:deepcopy-gen=true
 
 // ServersLoadBalancer holds the ServersLoadBalancer configuration.
 type ServersLoadBalancer struct {
@@ -115,6 +194,8 @@ type ServerHealthCheck struct {
 	FollowRedirects   *bool             `json:"followRedirects,omitempty" toml:"followRedirects,omitempty" yaml:"followRedirects,omitempty" export:"true"`
 	Headers           map[string]string `json:"headers,omitempty" toml:"headers,omitempty" yaml:"headers,omitempty" export:"true"`
 }
+
+// +k8s:deepcopy-gen=true
 
 // Sticky holds the sticky configuration.
 type Sticky struct {

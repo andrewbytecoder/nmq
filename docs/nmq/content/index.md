@@ -1,9 +1,9 @@
 ---
-title: "NCP Documentation"
-description: "NCP 是一个基于 Go 的组件化微服务运行与部署平台，内置组件管理、API 代理、WebUI、存储、Helm 与观测能力。"
+title: "NMQ Documentation"
+description: "NMQ 是一个基于 Go 的组件化微服务运行与部署平台，内置组件管理、API 代理、WebUI、存储、Helm 与观测能力。"
 ---
 
-# What is NCP?
+# What is NMQ?
 
 NCP 是平台组自研的 Go 微服务管理平台。它把原先部署管理系统拆成 `ncp`、`dpcore`、`dpproxy`、`network`、`webui` 等组件，由 `cmd/ncp` 统一注册并启动，功能包括配置解析、组件生命周期编排、HTTP/HTTPS 服务暴露、SQLite 存储、Helm chart 渲染、服务部署以及 Web 管理控制台。
 

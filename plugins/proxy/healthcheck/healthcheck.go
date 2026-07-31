@@ -2,7 +2,12 @@ package healthcheck
 
 import (
 	"context"
+	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
+	"github.com/andrewbytecoder/nmq/internal/config/runtimecfg"
 )
 
 // StatusSetter 状态设置接口, 用于设置子服务的状态, 服务里面应该实现这个接口，通知对应服务的状态
@@ -24,4 +29,17 @@ type target struct {
 
 type ServiceHealthChecker struct {
 	balancer StatusSetter
+	info     *runtimecfg.ServiceInfo
+
+	config            *dynamic.ServerHealthCheck
+	interval          time.Duration
+	unhealthyInterval time.Duration
+	timeout           time.Duration
+
+	client *http.Client
+
+	healthyTargets   chan target
+	unhealthyTargets chan target
+
+	serviceName string
 }

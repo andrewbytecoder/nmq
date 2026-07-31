@@ -1,0 +1,3 @@
+//go:generate deepcopy-gen --output-file zz_generated.deepcopy.go ./internal/config/dynamic/...
+
+package nmq
