@@ -1,0 +1,11 @@
+package runtimecfg
+
+var (
+	globalConfig = RuntimeCfg{}
+)
+
+// RuntimeCfg 运行时生成的配置
+type RuntimeCfg struct {
+	Server  Server
+	DirInfo DirInfo
+}
