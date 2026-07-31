@@ -121,10 +121,8 @@ func NewNmq(op ...Option) *Nmq {
 	n.rootCmd.SetUsageFunc(usageFunc)
 	// Make help just show the usage
 	n.rootCmd.SetHelpTemplate(`{{.UsageString}}`)
-	// config --config.file 无论在子命令还是主命令里面都只能使用一次
-	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.configFile, "config.file", "f", "ncp.yaml", "input the config file name")
-	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.certPath, "cert.path", "c", "./", "cert path for https")
-	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.workDir, "work", "w", "", "config the work path")
+
+	ParseFlags(n)
 
 	return n
 }
@@ -151,37 +149,54 @@ func usageFunc(c *cobra.Command) error {
 	return nil
 }
 
+func (n *Nmq) SetUpMetricsHandler() (*metrics.Registry, error) {
+	// 注册进程指标
+	registerProcessMetrics := n.cfg.metricsConfig.enableMetrics && n.cfg.metricsConfig.registerProcessMetrics
+	// 注册go指标
+	registerGoMetrics := n.cfg.metricsConfig.enableMetrics && n.cfg.metricsConfig.registerGoMetrics
+	// 注册服务指标
+	registerServerMetrics := n.cfg.metricsConfig.enableMetrics && n.cfg.metricsConfig.registerServerMetrics
+	registry := metrics.New(metrics.Config{
+		Prefix:                 "ncp",
+		RegisterProcessMetrics: registerProcessMetrics,
+		RegisterGoMetrics:      registerGoMetrics,
+		RegisterServerMetrics:  registerServerMetrics,
+	})
+
+	return registry, nil
+}
+
 // GetComponent 获取组件
-func (nmq *Nmq) GetComponent(uuid string) nmq.Component {
-	nmq.mux.RLock()
-	defer nmq.mux.RUnlock()
-	return nmq.components[uuid]
+func (n *Nmq) GetComponent(uuid string) nmq.Component {
+	n.mux.RLock()
+	defer n.mux.RUnlock()
+	return n.components[uuid]
 }
 
 // AddCommand 添加命令
-func (nmq *Nmq) AddCommand(cmds ...*cobra.Command) {
-	nmq.rootCmd.AddCommand(cmds...)
+func (n *Nmq) AddCommand(cmds ...*cobra.Command) {
+	n.rootCmd.AddCommand(cmds...)
 }
 
 // WgAdd 添加协程
-func (nmq *Nmq) WgAdd(delta int) {
-	nmq.wg.Add(delta)
+func (n *Nmq) WgAdd(delta int) {
+	n.wg.Add(delta)
 }
 
 // WaitGroup 等待所有协程完成
-func (nmq *Nmq) WaitGroup() {
-	nmq.wg.Wait()
+func (n *Nmq) WaitGroup() {
+	n.wg.Wait()
 }
 
 // GetComponentManager 获取组件管理器
-func (nmq *Nmq) GetComponentManager() nmq.ComponentManager {
-	return nmq
+func (n *Nmq) GetComponentManager() nmq.ComponentManager {
+	return n
 }
 
 // GetInterface 获取接口
-func (nmq *Nmq) GetInterface(uuid string) any {
-	for _, component := range nmq.components {
-		if component.GetName() == nmq.GetName() {
+func (n *Nmq) GetInterface(uuid string) any {
+	for _, component := range n.components {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		f := component.GetInterface(uuid)
@@ -192,32 +207,30 @@ func (nmq *Nmq) GetInterface(uuid string) any {
 	return nil
 }
 
-func (nmq *Nmq) RegisterComponents() {
+func (n *Nmq) RegisterComponents() {
 	// 注册组件
-	messageQueueComponent := mq.NewNetComponent(nmq)
-	nmq.components[messageQueueComponent.GetName()] = messageQueueComponent
+	messageQueueComponent := mq.NewNetComponent(n)
+	n.components[messageQueueComponent.GetName()] = messageQueueComponent
 }
 
 // Init 初始化组件
-func (nmq *Nmq) Init() error {
+func (n *Nmq) Init() error {
 	// Bind viper to the root command
-	err := viper.BindPFlag("configFile", nmq.rootCmd.PersistentFlags().Lookup("config.file"))
+	err := viper.BindPFlag("configFile", n.rootCmd.PersistentFlags().Lookup("config.file"))
 	if err != nil {
-		nmq.logger.Error("Error binding flag", zap.Error(err))
+		n.logger.Error("Error binding flag", zap.Error(err))
 		return err
 	}
 	viper.SetConfigType("yaml")
 
-	// 注册组件
-
-	for _, component := range nmq.components {
+	for _, component := range n.components {
 		// 自己不能初始化自己
-		if component.GetName() == nmq.GetName() {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		err := component.Init()
 		if err != nil {
-			nmq.logger.Error("Failed to init component", zap.Error(err))
+			n.logger.Error("Failed to init component", zap.Error(err))
 			return err
 		}
 	}
@@ -226,32 +239,32 @@ func (nmq *Nmq) Init() error {
 }
 
 // Start 启动组件
-func (nmq *Nmq) Start() error {
+func (n *Nmq) Start() error {
 	// 加载ncp各种辅助代理
-	err := loadAgentByConfig(nmq.cfg)
+	err := loadAgentByConfig(n.cfg)
 	if err != nil {
 		return err
 	}
 
 	// 启动调试 HTTP 服务（用于动态修改日志等级等）
-	startDebugServer(nmq)
+	startDebugServer(n)
 
 	// 启动协程池
-	nmq.pool, err = ants.NewPool(1000, ants.WithPanicHandler(func(err interface{}) {
-		nmq.logger.Error("panic", zap.Any("panic", err))
+	n.pool, err = ants.NewPool(1000, ants.WithPanicHandler(func(err interface{}) {
+		n.logger.Error("panic", zap.Any("panic", err))
 	}))
 	if err != nil {
-		nmq.logger.Error("Failed to create pool", zap.Error(err))
+		n.logger.Error("Failed to create pool", zap.Error(err))
 		return err
 	}
 
-	for _, component := range nmq.components {
-		if component.GetName() == nmq.GetName() {
+	for _, component := range n.components {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		err := component.Start()
 		if err != nil {
-			nmq.logger.Error("Failed to start component", zap.Error(err))
+			n.logger.Error("Failed to start component", zap.Error(err))
 			return err
 		}
 	}
@@ -259,20 +272,20 @@ func (nmq *Nmq) Start() error {
 }
 
 // Stop 停止组件
-func (nmq *Nmq) Stop() error {
+func (n *Nmq) Stop() error {
 
-	nmq.cancel()
+	n.cancel()
 
 	// 停止调试 HTTP 服务
-	stopDebugServer(nmq)
+	stopDebugServer(n)
 
-	for _, component := range nmq.components {
-		if component.GetName() == nmq.GetName() {
+	for _, component := range n.components {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		err := component.Stop()
 		if err != nil {
-			nmq.logger.Error("Failed to stop component", zap.Error(err))
+			n.logger.Error("Failed to stop component", zap.Error(err))
 			return err
 		}
 	}
@@ -281,14 +294,14 @@ func (nmq *Nmq) Stop() error {
 }
 
 // Reset 重置组件
-func (nmq *Nmq) Reset() error {
-	for _, component := range nmq.components {
-		if component.GetName() == nmq.GetName() {
+func (n *Nmq) Reset() error {
+	for _, component := range n.components {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		err := component.Reset()
 		if err != nil {
-			nmq.logger.Error("Failed to reset component", zap.Error(err))
+			n.logger.Error("Failed to reset component", zap.Error(err))
 			return err
 		}
 	}
@@ -296,89 +309,91 @@ func (nmq *Nmq) Reset() error {
 }
 
 // GetName 获取组件名称
-func (nmq *Nmq) GetName() string {
+func (n *Nmq) GetName() string {
 	return interfaces.NmqComponentName
 }
 
 // GetVersion 获取组件版本
-func (nmq *Nmq) GetVersion() string {
+func (n *Nmq) GetVersion() string {
 	return "v1.0.0.0"
 }
 
 // Notify 通知组件
-func (nmq *Nmq) Notify(event string, data any) {
-	for _, component := range nmq.components {
-		if component.GetName() == nmq.GetName() {
+func (n *Nmq) Notify(event string, data any) {
+	for _, component := range n.components {
+		if component.GetName() == n.GetName() {
 			continue
 		}
 		component.Notify(event, data)
 	}
 }
 
-func (nmq *Nmq) Submit(task func()) error {
-	nmq.mux.Lock()
-	defer nmq.mux.Unlock()
-	err := nmq.pool.Submit(task)
+func (n *Nmq) Submit(task func()) error {
+	n.mux.Lock()
+	defer n.mux.Unlock()
+	err := n.pool.Submit(task)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (nmq *Nmq) GetConfigFile() string {
-	return nmq.cfg.configFile
+func (n *Nmq) GetConfigFile() string {
+	return n.cfg.configFile
 }
 
-func (nmq *Nmq) GetCertPath() string {
-	return nmq.cfg.certPath
+func (n *Nmq) GetCertPath() string {
+	return n.cfg.certPath
 }
 
-func (nmq *Nmq) GetWorkDir() string {
-	return nmq.cfg.workDir
+func (n *Nmq) GetWorkDir() string {
+	return n.cfg.workDir
 }
 
 // GetStatus 获取组件状态
-func (nmq *Nmq) GetStatus() nmq.ComponentStatus {
-	return nmq.status
+func (n *Nmq) GetStatus() nmq.ComponentStatus {
+	return n.status
 }
 
 // GetContext 获取上下文
-func (nmq *Nmq) GetContext() context.Context {
-	return nmq.ctx
+func (n *Nmq) GetContext() context.Context {
+	return n.ctx
 }
 
-func (nmq *Nmq) GetCancel() context.CancelFunc {
-	return nmq.cancel
+func (n *Nmq) GetCancel() context.CancelFunc {
+	return n.cancel
 }
 
 // GetLogger 获取日志记录器
-func (nmq *Nmq) GetLogger() *zap.Logger {
-	return nmq.logger
+func (n *Nmq) GetLogger() *zap.Logger {
+	return n.logger
 }
 
 // SetLogLevel 动态设置日志等级（支持运行时修改）
 // 可接受的等级字符串: debug, info, warn, error, dpanic, panic, fatal
-func (nmq *Nmq) SetLogLevel(levelStr string) error {
+func (n *Nmq) SetLogLevel(levelStr string) error {
 	var level zapcore.Level
 	if err := level.UnmarshalText([]byte(levelStr)); err != nil {
 		return fmt.Errorf("invalid log level %q: %w", levelStr, err)
 	}
-	nmq.atomicLevel.SetLevel(level)
-	nmq.logger.Info("log level changed", zap.String("level", level.String()))
+	n.atomicLevel.SetLevel(level)
+	n.logger.Info("log level changed", zap.String("level", level.String()))
 	return nil
 }
 
 // GetLogLevel 获取当前日志等级
-func (nmq *Nmq) GetLogLevel() string {
-	return nmq.atomicLevel.Level().String()
+func (n *Nmq) GetLogLevel() string {
+	return n.atomicLevel.Level().String()
 }
 
 // Execute 运行组件
-func (nmq *Nmq) Execute() error {
+func (n *Nmq) Execute() error {
 
-	nmq.logger.Info("Waiting for NCP to exit")
-	if err := nmq.rootCmd.Execute(); err != nil {
-		nmq.logger.Error("Failed to execute NCP", zap.Error(err))
+	// 注册组件
+
+	n.logger.Info("Waiting for NCP to exit")
+	if err := n.rootCmd.Execute(); err != nil {
+		n.logger.Error("Failed to execute NCP", zap.Error(err))
 		return err
 	}
 
@@ -386,8 +401,8 @@ func (nmq *Nmq) Execute() error {
 }
 
 // RegisterComponent 注册组件
-func (nmq *Nmq) RegisterComponent(componentName string, component nmq.Component) {
-	nmq.mux.Lock()
-	defer nmq.mux.Unlock()
-	nmq.components[componentName] = component
+func (n *Nmq) RegisterComponent(componentName string, component nmq.Component) {
+	n.mux.Lock()
+	defer n.mux.Unlock()
+	n.components[componentName] = component
 }

@@ -1,13 +1,36 @@
 package nmq
 
 type Config struct {
-	enableGoPs      bool
-	enablePyroscope bool
-	poolNumber      int    // 协程池大小
-	configFile      string // 配置文件
-	certPath        string // 证书路径
-	workDir         string // 当前工作目录
-	debugPort       int    // 调试端口，0 表示不启动
+	enableGoPs       bool
+	enablePyroscope  bool
+	poolNumber       int    // 协程池大小
+	configFile       string // 配置文件
+	certPath         string // 证书路径
+	workDir          string // 当前工作目录
+	debugPort        int    // 调试端口，0 表示不启动
+	metricsConfig    MetricsConfig
+	componentConfigs ComponentConfigs
+}
+
+type ComponentConfigs struct {
+	webui        ComponentConfig
+	proxy        ComponentConfig
+	messageQueue ComponentConfig
+}
+
+type ComponentConfig struct {
+	name    string
+	enable  bool
+	version string
+	config  any
+}
+
+type MetricsConfig struct {
+	prefix                 string
+	enableMetrics          bool
+	registerProcessMetrics bool
+	registerGoMetrics      bool
+	registerServerMetrics  bool
 }
 
 func DefaultConfig() *Config {
