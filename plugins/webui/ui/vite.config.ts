@@ -40,6 +40,7 @@ export default ({ mode }: { mode: string }) => {
       include: [
         'src/App.spec.ts',
         'src/pages/GenericResourcePages.spec.ts',
+        'src/pages/api/ApiHandlersPage.vue.spec.ts',
         'src/pages/certificates/CertificateDetailPage.spec.ts',
         'src/pages/certificates/CertificatesPage.vue.spec.ts',
         'src/pages/hub-demo/HubDemoPage.spec.ts',

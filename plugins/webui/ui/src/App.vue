@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDisplay, useTheme } from 'vuetify'
 
@@ -13,19 +13,50 @@ const display = useDisplay()
 const theme = useTheme()
 const { navSection: hubDemoNavSection } = useHubDemoManifest()
 
-const isRail = computed(() => rail.value && !display.smAndDown.value)
+const usesTemporaryDrawer = computed(() => display.mdAndDown.value)
+const isRail = computed(() => rail.value && !usesTemporaryDrawer.value)
+const drawerOffset = computed(() => {
+  if (usesTemporaryDrawer.value || !drawer.value) {
+    return 0
+  }
+
+  return isRail.value ? 72 : 296
+})
 const pageTitle = computed(() => (typeof route.meta.title === 'string' ? route.meta.title : 'Dashboard'))
 const mergedNavSections = computed(() => [...navSections, hubDemoNavSection.value])
 
 const isDark = computed(() => theme.global.name.value === 'dark')
+const appShellStyle = computed(() => ({
+  '--app-drawer-offset': `${drawerOffset.value}px`,
+  '--app-bar-height': '64px',
+}))
+
+watch(
+  usesTemporaryDrawer,
+  (isTemporary) => {
+    if (isTemporary) {
+      rail.value = false
+      return
+    }
+
+    drawer.value = true
+  },
+  { immediate: true },
+)
 
 function toggleTheme() {
   theme.global.name.value = isDark.value ? 'light' : 'dark'
 }
 
 function toggleDrawer() {
-  if (display.smAndDown.value) {
+  if (usesTemporaryDrawer.value) {
     drawer.value = !drawer.value
+    return
+  }
+
+  if (!drawer.value) {
+    drawer.value = true
+    rail.value = false
     return
   }
 
@@ -34,12 +65,12 @@ function toggleDrawer() {
 </script>
 
 <template>
-  <v-app>
+  <v-app :style="appShellStyle">
     <v-navigation-drawer
       v-model="drawer"
       :rail="isRail"
       :rail-width="72"
-      :temporary="display.smAndDown.value"
+      :temporary="usesTemporaryDrawer"
       width="296"
       color="secondary"
     >

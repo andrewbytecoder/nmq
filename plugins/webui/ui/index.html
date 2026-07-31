@@ -7,6 +7,9 @@
       window.APIUrl = "{{.APIUrl}}"
     </script>
     {{end}}
+    {{if .DashboardBase}}
+    <base href="{{.DashboardBase}}" />
+    {{end}}
 
     <meta charset="utf-8" />
     <link rel="icon" href="/favicon.ico" />

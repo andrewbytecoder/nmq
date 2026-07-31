@@ -24,6 +24,18 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    key: 'api',
+    label: 'API',
+    items: [
+      {
+        path: '/api/http-handlers',
+        label: 'ROUTERS Handler',
+        icon: 'mdi-api',
+        description: 'Inspect request handlers exposed by the dpproxy gin service.',
+      },
+    ],
+  },
+  {
     key: 'http',
     label: 'HTTP',
     items: [
@@ -86,6 +98,18 @@ export const navSections: NavSection[] = [
         label: 'UDP Services',
         icon: 'mdi-server-network-outline',
         description: 'Inspect UDP services and datagram-oriented backend mappings.',
+      },
+    ],
+  },
+  {
+    key: 'fileview',
+    label: 'FileView',
+    items: [
+      {
+        path: '/fileview',
+        label: 'File Viewer',
+        icon: 'mdi-file-eye-outline',
+        description: 'Browse and edit files from the backend workdir with the embedded file manager.',
       },
     ],
   },

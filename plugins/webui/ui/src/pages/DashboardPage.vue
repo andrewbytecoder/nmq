@@ -19,6 +19,7 @@ const providerIcons: Record<string, string> = {
 const { loading, error, entrypoints, overview, features, resourceGroups, reload } = useDashboardOverview()
 
 const providerList = computed(() => overview.value?.providers ?? [])
+const apiHandlersStats = computed(() => overview.value?.api?.handlers)
 
 function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1)
@@ -34,11 +35,11 @@ function providerIcon(name: string) {
     <section class="hero-strip">
       <div>
         <div class="eyebrow">Overview</div>
-        <h1 class="hero-title">Traefik dashboard, now running on Vue 3 and Vuetify.</h1>
+        <h1 class="hero-title">NCP dashboard.</h1>
         <p class="hero-copy">
-          This page ports the top-level dashboard experience first, so the embedded frontend can already
-          show live overview data while deeper resource pages migrate incrementally from the legacy React
-          implementation.
+          NCP (Not only Cloud Platform) is a unified operations platform providing product deployment,
+          topology management, log monitoring, and resource scheduling capabilities to help teams
+          manage the full lifecycle of distributed systems efficiently.
         </p>
       </div>
       <div class="hero-actions">
@@ -126,6 +127,49 @@ function providerIcon(name: string) {
                     <div class="stat-pill danger">
                       <span class="stat-label">Errors</span>
                       <strong>{{ group.stats[resourceKey]?.errors ?? 0 }}</strong>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </template>
+          <v-col v-else cols="12">
+            <v-alert type="info" variant="tonal" text="No related objects to show." />
+          </v-col>
+        </v-row>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="section-heading">
+          <h2>API</h2>
+          <span>/api/http-handlers</span>
+        </div>
+        <v-row dense>
+          <template v-if="apiHandlersStats">
+            <v-col cols="12" md="4">
+              <v-card to="/api/http-handlers" rounded="xl" variant="elevated" class="stats-card">
+                <v-card-item>
+                  <template #prepend>
+                    <v-avatar color="primary" variant="tonal">
+                      <v-icon icon="mdi-api" />
+                    </v-avatar>
+                  </template>
+                  <v-card-title>ROUTERS Handler</v-card-title>
+                  <v-card-subtitle>Open API handler catalog</v-card-subtitle>
+                </v-card-item>
+                <v-card-text>
+                  <div class="stats-grid">
+                    <div class="stat-pill">
+                      <span class="stat-label">Total</span>
+                      <strong>{{ apiHandlersStats.total ?? 0 }}</strong>
+                    </div>
+                    <div class="stat-pill warning">
+                      <span class="stat-label">Warnings</span>
+                      <strong>{{ apiHandlersStats.warnings ?? 0 }}</strong>
+                    </div>
+                    <div class="stat-pill danger">
+                      <span class="stat-label">Errors</span>
+                      <strong>{{ apiHandlersStats.errors ?? 0 }}</strong>
                     </div>
                   </div>
                 </v-card-text>

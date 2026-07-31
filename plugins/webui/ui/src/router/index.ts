@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import ApiHandlersPage from '../pages/api/ApiHandlersPage.vue'
 import CertificateDetailPage from '../pages/certificates/CertificateDetailPage.vue'
 import CertificatesPage from '../pages/certificates/CertificatesPage.vue'
 import DashboardPage from '../pages/DashboardPage.vue'
+import FileViewPage from '../pages/fileview/FileViewPage.vue'
 import GenericResourceCollectionPage from '../pages/GenericResourceCollectionPage.vue'
 import GenericResourceDetailPage from '../pages/GenericResourceDetailPage.vue'
 import HttpMiddlewareDetailPage from '../pages/http/HttpMiddlewareDetailPage.vue'
@@ -98,6 +100,17 @@ export const router = createRouter({
       },
     },
     {
+      path: '/api/http-handlers',
+      name: 'api-http-handlers',
+      component: ApiHandlersPage,
+      props: {
+        protocol: 'routers',
+      },
+      meta: {
+        title: 'ROUTERS Handler',
+      },
+    },
+    {
       path: '/http/routers',
       name: 'http-routers',
       component: HttpRoutersPage,
@@ -151,6 +164,14 @@ export const router = createRouter({
       component: CertificatesPage,
       meta: {
         title: 'Certificates',
+      },
+    },
+    {
+      path: '/fileview',
+      name: 'fileview',
+      component: FileViewPage,
+      meta: {
+        title: 'File Viewer',
       },
     },
     {

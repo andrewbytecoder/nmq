@@ -15,10 +15,15 @@ export type ProtocolOverview = {
   middlewares?: ResourceStats
 }
 
+export type ApiOverview = {
+  handlers?: ResourceStats
+}
+
 export type DashboardOverview = {
   http?: ProtocolOverview
   tcp?: ProtocolOverview
   udp?: ProtocolOverview
+  api?: ApiOverview
   features?: Record<string, boolean | string | number>
   providers?: string[]
 }
