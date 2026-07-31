@@ -1,0 +1,119 @@
+site_name: NCP
+site_description: NCP Documentation
+site_author: wangyazhou
+site_url: http://10.168.8.110:8000/ncp/
+dev_addr: localhost:8010
+
+docs_dir: "content"
+hooks:
+  - "hooks/strip_external_assets.py"
+
+theme:
+  name: "traefik-labs"
+  custom_dir: "overrides"
+  product: proxy
+  language: zh
+  include_sidebar: true
+  font: false
+  feature:
+    tabs: false
+  features:
+    - content.code.copy
+  palette:
+    primary: "cyan"
+    accent: "cyan"
+
+copyright: "NCP Documentation"
+
+extra_javascript:
+  - assets/js/hljs/highlight.pack.js
+  - assets/js/extra.js
+
+extra_css:
+  - assets/css/menu-icons.css
+  - assets/css/code-copy.css
+  - assets/css/content-width.css
+  - assets/css/ncp-theme-cleanup.css
+
+plugins:
+  - search
+  - exclude:
+      glob:
+        - "**/include-*.md"
+  - include-markdown:
+      encoding: utf-8
+
+markdown_extensions:
+  - meta
+  - attr_list
+  - admonition
+  - footnotes
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.highlight:
+      use_pygments: false
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - pymdownx.snippets:
+      check_paths: true
+  - toc:
+      permalink: true
+
+nav:
+  - "What is NCP": "index.md"
+  - "Features": "features/index.md"
+  - "Getting Started":
+      - "Overview": "getting-started/index.md"
+      - "Configuration Introduction": "getting-started/configuration-overview.md"
+      - "Quick Start":
+          - "Docker": "getting-started/docker.md"
+          - "Kubernetes": "getting-started/kubernetes.md"
+  - "Setup":
+      - "Docker": "setup/docker.md"
+      - "Kubernetes": "setup/kubernetes.md"
+  - "Expose":
+      - "Overview": "expose/overview.md"
+  - "Secure":
+      - "Secure Access with JWT": "secure/secure-api-access-with-jwt.md"
+  - "Observe":
+      - "Overview": "observe/overview.md"
+      - "Logs & Access Logs": "observe/logs-and-access-logs.md"
+      - "Metrics": "observe/metrics.md"
+  - "Plugins":
+      - "Overview": "plugins/index.md"
+      - "ncp": "plugins/ncp.md"
+      - "dpproxy": "plugins/dpproxy.md"
+      - "dpcore": "plugins/dpcore.md"
+      - "network": "plugins/network.md"
+      - "webui": "plugins/webui.md"
+  - "Extend": "extend/extend-ncp.md"
+  - "Govern": "govern/index.md"
+  - "Migrate": "migrate/index.md"
+  - "Reference":
+      - "Overview": "reference/index.md"
+      - "Install Configuration":
+          - "Boot Environment": "reference/install-configuration/boot-environment.md"
+          - "Configuration Options": "reference/install-configuration/configuration-options.md"
+          - "Runtime Layout": "reference/install-configuration/runtime-layout.md"
+      - "Routing & APIs":
+          - "Component Interfaces": "reference/routing-configuration/component-interfaces.md"
+          - "HTTP API Surface": "reference/routing-configuration/http-api.md"
+      - "Storage": "reference/storage-sqlite.md"
+  - "Routing": "routing/overview.md"
+  - "HTTPS":
+      - "Overview": "https/overview.md"
+      - "Certificates": "https/certificates.md"
+  - "Security": "security/index.md"
+  - "Operations":
+      - "Overview": "operations/index.md"
+      - "CLI": "operations/cli.md"
+      - "Storage & Packages": "operations/storage-and-packages.md"
+      - "Deployment Workflow": "operations/deployment-workflow.md"
+  - "User Guides":
+      - "Run Locally": "user-guides/run-locally.md"
+      - "Register a Component": "user-guides/register-component.md"
+      - "Inspect SQLite via WebUI": "user-guides/inspect-storage.md"
+  - "Contributing": "contributing/index.md"
+  - "Deprecation": "deprecation/index.md"
