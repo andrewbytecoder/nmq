@@ -1,17 +1,18 @@
 package mq
 
 import (
+	"github.com/andrewbytecoder/nmq/interfaces"
 	"github.com/andrewbytecoder/nmq/interfaces/nmq"
 	"go.uber.org/zap"
 )
 
 type MessageQueueComponent struct {
-	ctx nmq.NmqContext
+	ctx nmq.Context
 	log *zap.Logger
 }
 
 // NewNetComponent 创建网络组件实例
-func NewNetComponent(ctx nmq.NmqContext) *MessageQueueComponent {
+func NewNetComponent(ctx nmq.Context) *MessageQueueComponent {
 	return &MessageQueueComponent{
 		ctx: ctx,
 		log: ctx.GetLogger(),
@@ -60,7 +61,7 @@ func (nc *MessageQueueComponent) Reset() error {
 //
 // @return string 组件名称
 func (nc *MessageQueueComponent) GetName() string {
-	return "subscribe_component"
+	return interfaces.MqComponentName
 }
 
 // GetVersion 获取组件版本号

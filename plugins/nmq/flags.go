@@ -2,7 +2,7 @@ package nmq
 
 func ParseFlags(n *Nmq) {
 	// config --config.file 无论在子命令还是主命令里面都只能使用一次
-	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.configFile, "config.file", "f", "ncp.yaml", "input the config file name")
+	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.configFile, "config.file", "f", "nmq.yaml", "input the config file name")
 	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.certPath, "cert.path", "c", "", "cert path for https")
 	n.rootCmd.PersistentFlags().StringVarP(&n.cfg.workDir, "work.dir", "w", "", "config local work path")
 	n.rootCmd.PersistentFlags().StringVar(&n.cfg.metricsConfig.prefix, "register.prefix.metrics", "ncp", "metrics name prefix")

@@ -3,20 +3,20 @@ package routeinfoprovider
 import (
 	"fmt"
 
-	"ysp.com/ncp/ncp/interfaces/dpproxy"
+	"github.com/gin-gonic/gin"
 )
 
 type RouteInfoProvider struct {
-	r dpproxy.IRouter
+	r gin.IRouter
 }
 
-func New(r dpproxy.IRouter) *RouteInfoProvider {
+func New(r gin.IRouter) *RouteInfoProvider {
 	return &RouteInfoProvider{
 		r: r,
 	}
 }
 
-type RoutesInfo []dpproxy.RouteInfo
+type RoutesInfo []gin.RouteInfo
 
 type IRouteInfoProvider interface {
 	ListRouters() (RoutesInfo, error)
@@ -34,6 +34,7 @@ func (p *RouteInfoProvider) ListRouters() (routes RoutesInfo, err error) {
 		}
 	}()
 
-	routes = p.r.GetRoutes()
-	return routes, nil
+	//routes = p.r.GetRoutes()
+	//return routes, nil
+	return nil, nil
 }

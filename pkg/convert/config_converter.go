@@ -3,9 +3,19 @@ package convert
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
+
+func getConfigName(configFile string) string {
+	ext := filepath.Ext(configFile)
+	if ext != "" {
+		return configFile[:len(configFile)-len(ext)]
+	}
+	return configFile
+}
 
 // ParseConfig parses the configuration from a YAML file
 // @Description Parses the configuration from a YAML file
@@ -17,9 +27,18 @@ func ParseConfig[T any]() (T, error) {
 	if configFile == "" {
 		return config, errors.New("no config file specified")
 	}
-	viper.AddConfigPath(".") // add the current directory as a search path
-	viper.SetConfigFile(configFile)
 
+	// 如果configFile是相对路径，需要结合工作目录
+	// 检查是否已经是绝对路径
+	if !filepath.IsAbs(configFile) {
+		// Backward compatible: allow passing "config" without extension.
+		// viper will search config.{yaml,yml,json,...} under AddConfigPath.
+		viper.SetConfigName(getConfigName(configFile))
+		viper.SetConfigType(strings.TrimPrefix(filepath.Ext(configFile), "."))
+	} else {
+		// 如果是绝对路径，直接使用
+		viper.SetConfigFile(configFile)
+	}
 	// load the yaml config file info
 	err := viper.ReadInConfig()
 	if err != nil {

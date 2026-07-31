@@ -3,28 +3,27 @@ package webui
 import (
 	"fmt"
 
+	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/interfaces/nmq"
+	"github.com/andrewbytecoder/nmq/internal/config"
+	"github.com/andrewbytecoder/nmq/plugins/webui/api"
+	"github.com/andrewbytecoder/nmq/plugins/webui/ctx"
+	"github.com/andrewbytecoder/nmq/plugins/webui/routeinfoprovider"
+	"github.com/andrewbytecoder/nmq/plugins/webui/storage"
 	"go.uber.org/zap"
-	"ysp.com/ncp/ncp/interfaces"
-	"ysp.com/ncp/ncp/interfaces/dpproxy"
-	"ysp.com/ncp/ncp/interfaces/ncp"
-	"ysp.com/ncp/ncp/internal/config"
-	"ysp.com/ncp/ncp/plugins/webui/api"
-	"ysp.com/ncp/ncp/plugins/webui/ctx"
-	"ysp.com/ncp/ncp/plugins/webui/routeinfoprovider"
-	"ysp.com/ncp/ncp/plugins/webui/storage"
 )
 
 const componentName = "webui"
 
 type WebUI struct {
-	ncp.ComponentBase
+	nmq.ComponentBase
 
 	ctx *ctx.Context
 }
 
-func NewWebComponent(ctx ncp.Context) *WebUI {
+func NewWebComponent(ctx nmq.Context) *WebUI {
 	component := &WebUI{
-		ComponentBase: ncp.NewComponentBase(ctx),
+		ComponentBase: nmq.NewComponentBase(ctx),
 	}
 
 	return component
@@ -36,14 +35,14 @@ func (c *WebUI) GetInterface(uuid string) any {
 
 func (c *WebUI) Init() error {
 	// 1. 初始化上下文环境
-	c.ctx = ctx.NewContext(c.NcpCtx)
+	c.ctx = ctx.NewContext(c.NmqCtx)
 
 	return nil
 }
 
 func (c *WebUI) Start() error {
 	// 2. 初始化路由管理器
-	r, ok := c.NcpCtx.GetInterface(interfaces.DpProxyRouter).(dpproxy.IRouter)
+	r, ok := c.NmqCtx.GetInterface(interfaces.NetworkComponentName).(gin.IRouter)
 	if !ok {
 		c.Log.Error("get router manager failed")
 		return fmt.Errorf("get router manager failed")
@@ -80,12 +79,12 @@ func (c *WebUI) GetVersion() string {
 func (c *WebUI) Notify(event string, data any) {
 }
 
-func (c *WebUI) GetStatus() ncp.ComponentStatus {
+func (c *WebUI) GetStatus() nmq.ComponentStatus {
 	return c.Status
 }
 
 func (c *WebUI) run() error {
-	listenAddr := config.GetWebHttpAddress()
+	listenAddr := config.GetNetworkConfig().GetWebuiConfig().GetAddress()
 
 	server, err := api.NewServer(api.Config{
 		Ctx:             c.ctx,
@@ -93,7 +92,7 @@ func (c *WebUI) run() error {
 		DashboardPath:   "/dashboard",
 		APIBasePath:     "/api",
 		ListenAddr:      listenAddr,
-		StorageProvider: storage.NewSQLiteTableProvider(c.NcpCtx, c.Log),
+		StorageProvider: storage.NewSQLiteTableProvider(c.NmqCtx, c.Log),
 		RouteProvider:   routeinfoprovider.New(c.ctx.GetRouter()),
 	})
 	if err != nil {

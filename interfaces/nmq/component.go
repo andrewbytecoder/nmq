@@ -11,10 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-// NmqContext 是组件初始化时使用的上下文接口
+// Context 是组件初始化时使用的上下文接口
 //
 // 提供对全局 Context、Logger 和组件管理器的访问
-type NmqContext interface {
+type Context interface {
 	GetContext() context.Context
 	GetCancel() context.CancelFunc
 	GetLogger() *zap.Logger
@@ -29,7 +29,7 @@ type NmqContext interface {
 
 // ComponentBase 是组件的基础结构体，提供了所有组件都需要的基本字段和功能
 type ComponentBase struct {
-	NcpCtx           NmqContext       // ncp 上下文环境，提供全局上下文、日志和组件管理器访问
+	NmqCtx           Context          // ncp 上下文环境，提供全局上下文、日志和组件管理器访问
 	Log              *zap.Logger      // 全局日志对象，用于组件内部日志记录
 	ComponentManager ComponentManager // 组件管理器，用于访问其他组件
 	Status           ComponentStatus  // 组件当前的生命周期状态
@@ -40,9 +40,9 @@ type ComponentBase struct {
 //
 // @param ncpCtx NcpContext NCP上下文，包含全局上下文、日志记录器和组件管理器
 // @return ComponentBase 初始化后的组件基础结构体
-func NewComponentBase(ncpCtx NmqContext) ComponentBase {
+func NewComponentBase(ncpCtx Context) ComponentBase {
 	return ComponentBase{
-		NcpCtx:           ncpCtx,                       // 保存NCP上下文引用
+		NmqCtx:           ncpCtx,                       // 保存NCP上下文引用
 		Log:              ncpCtx.GetLogger(),           // 从上下文中获取全局日志记录器
 		ComponentManager: ncpCtx.GetComponentManager(), // 从上下文中获取组件管理器
 		Status:           ComponentOk,                  // 初始化组件状态为OK
@@ -79,7 +79,7 @@ type Component interface {
 
 	// Init 初始化组件
 	//
-	// @param ctx NmqContext 上下文环境
+	// @param ctx Context 上下文环境
 	// @return error 错误信息
 	Init() error
 

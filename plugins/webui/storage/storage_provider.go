@@ -5,17 +5,15 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/andrewbytecoder/nmq/interfaces"
+	"github.com/andrewbytecoder/nmq/interfaces/nmq"
 	"go.uber.org/zap"
-	"ysp.com/ncp/ncp/interfaces"
-	"ysp.com/ncp/ncp/interfaces/dpcore/model"
-	"ysp.com/ncp/ncp/interfaces/ncp"
-	dpcorestorage "ysp.com/ncp/ncp/plugins/dpcore/storage"
 )
 
 var ErrSQLiteTableNotFound = errors.New("sqlite table not found")
 
 type SqliteTableProvider struct {
-	ctx ncp.Context
+	ctx nmq.Context
 	log *zap.Logger
 }
 
@@ -53,7 +51,7 @@ type sqliteTableReader interface {
 	ReadSQLiteTable(tableName string, page int, perPage int) ([]string, []map[string]any, int64, error)
 }
 
-func NewSQLiteTableProvider(ctx ncp.Context, log *zap.Logger) *SqliteTableProvider {
+func NewSQLiteTableProvider(ctx nmq.Context, log *zap.Logger) *SqliteTableProvider {
 	if log == nil {
 		log = zap.NewNop()
 	}
@@ -98,20 +96,20 @@ func (p *SqliteTableProvider) GetSQLiteTable(name string, page int, perPage int)
 		return SQLiteTableDetail{}, err
 	}
 
-	reader, ok := p.ctx.GetInterface(interfaces.DpStorageName).(sqliteTableReader)
+	reader, ok := p.ctx.GetInterface(interfaces.WebComponentName).(sqliteTableReader)
 	if !ok {
 		return SQLiteTableDetail{}, errors.New("dp storage is unavailable")
 	}
 
 	columns, rows, rowCount, err := reader.ReadSQLiteTable(tableName, page, perPage)
 	if err != nil {
-		if errors.Is(err, dpcorestorage.ErrSQLiteTableNotFound) {
-			columns = expectedColumns
-			rows = []map[string]any{}
-			rowCount = 0
-		} else {
-			return SQLiteTableDetail{}, err
-		}
+		//if errors.Is(err, dpcorestorage.ErrSQLiteTableNotFound) {
+		//	columns = expectedColumns
+		//	rows = []map[string]any{}
+		//	rowCount = 0
+		//} else {
+		//	return SQLiteTableDetail{}, err
+		//}
 	}
 
 	if len(columns) == 0 {
@@ -131,186 +129,188 @@ func (p *SqliteTableProvider) GetSQLiteTable(name string, page int, perPage int)
 }
 
 func (p *SqliteTableProvider) managedTableQueries() ([]managedTableQuery, error) {
-	idcInfoMng, ok := p.ctx.GetInterface(interfaces.DpIdcInfoStorageName).(model.IIdcInfoMng)
-	if !ok {
-		return nil, errors.New("dp idc info storage is unavailable")
-	}
+	//idcInfoMng, ok := p.ctx.GetInterface(interfaces.DpIdcInfoStorageName).(model.IIdcInfoMng)
+	//if !ok {
+	//	return nil, errors.New("dp idc info storage is unavailable")
+	//}
+	//
+	//productInfoMng, ok := p.ctx.GetInterface(interfaces.DPProductInfoName).(model.IProductRepository)
+	//if !ok {
+	//	return nil, errors.New("dp product info storage is unavailable")
+	//}
+	//
+	//deployInfoMng, ok := p.ctx.GetInterface(interfaces.DpDeployInfoStorageName).(model.DeployRepository)
+	//if !ok {
+	//	return nil, errors.New("dp deploy info storage is unavailable")
+	//}
+	//
+	//certInfoMng, ok := p.ctx.GetInterface(interfaces.DpCertInfoStorageName).(model.ICerInfoMng)
+	//if !ok {
+	//	return nil, errors.New("dp cert info storage is unavailable")
+	//}
+	//
+	//topoInfoMng, ok := p.ctx.GetInterface(interfaces.DpTopoInfoStorageName).(model.ITopoInfoMng)
+	//if !ok {
+	//	return nil, errors.New("dp topo info storage is unavailable")
+	//}
+	//
+	//operateLogMng, ok := p.ctx.GetInterface(interfaces.DpOperateLogStorageName).(model.IOperateLogMng)
+	//if !ok {
+	//	return nil, errors.New("dp operate log storage is unavailable")
+	//}
+	//
+	//serviceGroupMng, ok := p.ctx.GetInterface(interfaces.DpServiceGroupMngStorageName).(model.IServiceGroupMng)
+	//if !ok {
+	//	return nil, errors.New("dp service group storage is unavailable")
+	//}
+	//
+	//configRepo, ok := p.ctx.GetInterface(interfaces.DpConfigDataStorageName).(model.ConfigRepository)
+	//if !ok {
+	//	return nil, errors.New("dp config data storage is unavailable")
+	//}
+	//
+	//var optRepo model.OptInfoRepository
+	//if repo, ok := p.ctx.GetInterface(interfaces.DpOperateLogStorageName).(model.OptInfoRepository); ok {
+	//	optRepo = repo
+	//}
+	//
+	//queries := []managedTableQuery{
+	//	{
+	//		sample:  model.IdcInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := idcInfoMng.GetIdcInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ProductInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := productInfoMng.GetAllProductInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ProductVersionInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := productInfoMng.GetAllProductVersion()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ProductPkgInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := productInfoMng.GetAllProductPkgInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.DeployIpInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := deployInfoMng.GetAllDeployIpInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.DeployPort{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := deployInfoMng.GetAllDeployPort()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.DeployMicroPort{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := deployInfoMng.GetAllDeployMicroPort()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.DeployFileInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := deployInfoMng.GetAllDeployFileInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.CertInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := certInfoMng.GetAllCertInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.TopoInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := topoInfoMng.GetAllTopoInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.OperateLog{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			_, total, err := operateLogMng.FindAll(model.NewPageable().SetPage(0).SetSize(1))
+	//			return total, err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ServiceGroupMng{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := serviceGroupMng.GetAllServiceGroupMng()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ServiceGroupInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := serviceGroupMng.GetAllServiceGroupInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ConfigDataInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := configRepo.GetAllConfigDataInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//	{
+	//		sample:  model.ConfigRegInfo{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := configRepo.GetAllConfigRegInfo()
+	//			return int64(len(items)), err
+	//		},
+	//	},
+	//}
+	//
+	//if optRepo != nil {
+	//	queries = append(queries, managedTableQuery{
+	//		sample:  model.SystemParam{},
+	//		typeTag: "managed",
+	//		countFn: func() (int64, error) {
+	//			items, err := optRepo.GetAllSystemParam()
+	//			return int64(len(items)), err
+	//		},
+	//	})
+	//}
 
-	productInfoMng, ok := p.ctx.GetInterface(interfaces.DPProductInfoName).(model.IProductRepository)
-	if !ok {
-		return nil, errors.New("dp product info storage is unavailable")
-	}
+	//return queries, nil
 
-	deployInfoMng, ok := p.ctx.GetInterface(interfaces.DpDeployInfoStorageName).(model.DeployRepository)
-	if !ok {
-		return nil, errors.New("dp deploy info storage is unavailable")
-	}
-
-	certInfoMng, ok := p.ctx.GetInterface(interfaces.DpCertInfoStorageName).(model.ICerInfoMng)
-	if !ok {
-		return nil, errors.New("dp cert info storage is unavailable")
-	}
-
-	topoInfoMng, ok := p.ctx.GetInterface(interfaces.DpTopoInfoStorageName).(model.ITopoInfoMng)
-	if !ok {
-		return nil, errors.New("dp topo info storage is unavailable")
-	}
-
-	operateLogMng, ok := p.ctx.GetInterface(interfaces.DpOperateLogStorageName).(model.IOperateLogMng)
-	if !ok {
-		return nil, errors.New("dp operate log storage is unavailable")
-	}
-
-	serviceGroupMng, ok := p.ctx.GetInterface(interfaces.DpServiceGroupMngStorageName).(model.IServiceGroupMng)
-	if !ok {
-		return nil, errors.New("dp service group storage is unavailable")
-	}
-
-	configRepo, ok := p.ctx.GetInterface(interfaces.DpConfigDataStorageName).(model.ConfigRepository)
-	if !ok {
-		return nil, errors.New("dp config data storage is unavailable")
-	}
-
-	var optRepo model.OptInfoRepository
-	if repo, ok := p.ctx.GetInterface(interfaces.DpOperateLogStorageName).(model.OptInfoRepository); ok {
-		optRepo = repo
-	}
-
-	queries := []managedTableQuery{
-		{
-			sample:  model.IdcInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := idcInfoMng.GetIdcInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ProductInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := productInfoMng.GetAllProductInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ProductVersionInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := productInfoMng.GetAllProductVersion()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ProductPkgInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := productInfoMng.GetAllProductPkgInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.DeployIpInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := deployInfoMng.GetAllDeployIpInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.DeployPort{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := deployInfoMng.GetAllDeployPort()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.DeployMicroPort{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := deployInfoMng.GetAllDeployMicroPort()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.DeployFileInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := deployInfoMng.GetAllDeployFileInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.CertInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := certInfoMng.GetAllCertInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.TopoInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := topoInfoMng.GetAllTopoInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.OperateLog{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				_, total, err := operateLogMng.FindAll(model.NewPageable().SetPage(0).SetSize(1))
-				return total, err
-			},
-		},
-		{
-			sample:  model.ServiceGroupMng{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := serviceGroupMng.GetAllServiceGroupMng()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ServiceGroupInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := serviceGroupMng.GetAllServiceGroupInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ConfigDataInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := configRepo.GetAllConfigDataInfo()
-				return int64(len(items)), err
-			},
-		},
-		{
-			sample:  model.ConfigRegInfo{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := configRepo.GetAllConfigRegInfo()
-				return int64(len(items)), err
-			},
-		},
-	}
-
-	if optRepo != nil {
-		queries = append(queries, managedTableQuery{
-			sample:  model.SystemParam{},
-			typeTag: "managed",
-			countFn: func() (int64, error) {
-				items, err := optRepo.GetAllSystemParam()
-				return int64(len(items)), err
-			},
-		})
-	}
-
-	return queries, nil
+	return nil, nil
 }
 
 func buildManagedTableSummary(query managedTableQuery) (SQLiteTableSummary, error) {

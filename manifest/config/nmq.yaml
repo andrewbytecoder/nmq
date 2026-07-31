@@ -1,0 +1,6 @@
+
+
+network:
+  webui:
+    port: 8080
+

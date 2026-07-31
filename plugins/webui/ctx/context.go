@@ -1,27 +1,26 @@
 package ctx
 
 import (
+	"github.com/andrewbytecoder/nmq/interfaces/nmq"
 	"go.uber.org/zap"
-	"ysp.com/ncp/ncp/interfaces/dpproxy"
-	"ysp.com/ncp/ncp/interfaces/ncp"
 )
 
 type Context struct {
 	log *zap.Logger
-	r   dpproxy.IRouter
+	r   gin.IRouter
 }
 
-func NewContext(ctx ncp.Context) *Context {
+func NewContext(ctx nmq.Context) *Context {
 	return &Context{
 		log: ctx.GetLogger(),
 	}
 }
 
-func (c *Context) SetRouter(r dpproxy.IRouter) {
+func (c *Context) SetRouter(r gin.IRouter) {
 	c.r = r
 }
 
-func (c *Context) GetRouter() dpproxy.IRouter {
+func (c *Context) GetRouter() gin.IRouter {
 	return c.r
 }
 

@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
+	"strings"
 	"sync"
 
 	"github.com/andrewbytecoder/nmq/interfaces"
 	"github.com/andrewbytecoder/nmq/interfaces/nmq"
+	"github.com/andrewbytecoder/nmq/internal/config"
+	"github.com/andrewbytecoder/nmq/internal/metrics"
 	"github.com/andrewbytecoder/nmq/pkg/utils"
 	"github.com/andrewbytecoder/nmq/plugins/mq"
+	"github.com/andrewbytecoder/nmq/plugins/proxy"
 	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,6 +37,8 @@ type Nmq struct {
 	cfg         *Config
 
 	pool *ants.Pool
+
+	registry *metrics.Registry // 指标注册器
 }
 
 // NewNmq 创建一个组件管理器
@@ -124,6 +129,9 @@ func NewNmq(op ...Option) *Nmq {
 
 	ParseFlags(n)
 
+	// 注册组件
+	registerComponents(n)
+
 	return n
 }
 
@@ -147,6 +155,15 @@ func usageFunc(c *cobra.Command) error {
 
 	// 假设没有错误
 	return nil
+}
+
+func registerComponents(n *Nmq) {
+	n.RegisterComponent(interfaces.ProxyComponentName, proxy.NewComponent(n))
+	n.RegisterComponent(interfaces.MqComponentName, mq.NewNetComponent(n))
+}
+
+func unregisterComponents(n *Nmq) {
+
 }
 
 func (n *Nmq) SetUpMetricsHandler() (*metrics.Registry, error) {
@@ -195,6 +212,15 @@ func (n *Nmq) GetComponentManager() nmq.ComponentManager {
 
 // GetInterface 获取接口
 func (n *Nmq) GetInterface(uuid string) any {
+	// 先从平台找interface
+	if uuid == n.GetName() {
+		return n
+	}
+
+	if uuid == interfaces.NmqMetricsRegistry {
+		return n.registry
+	}
+
 	for _, component := range n.components {
 		if component.GetName() == n.GetName() {
 			continue
@@ -207,12 +233,6 @@ func (n *Nmq) GetInterface(uuid string) any {
 	return nil
 }
 
-func (n *Nmq) RegisterComponents() {
-	// 注册组件
-	messageQueueComponent := mq.NewNetComponent(n)
-	n.components[messageQueueComponent.GetName()] = messageQueueComponent
-}
-
 // Init 初始化组件
 func (n *Nmq) Init() error {
 	// Bind viper to the root command
@@ -221,8 +241,29 @@ func (n *Nmq) Init() error {
 		n.logger.Error("Error binding flag", zap.Error(err))
 		return err
 	}
-	viper.SetConfigType("yaml")
+	viper.AddConfigPath(n.GetWorkDir())
+	// 也添加当前目录作为备选路径
+	viper.AddConfigPath(".")
+	// 设置 viper 支持多种命名风格的自动转换（下划线和短横线互转）
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
+	// 解析配置
+	err = config.ParseConfig(n.logger)
+	if err != nil {
+		n.logger.Error("Error parsing config", zap.Error(err))
+		return err
+	}
+
+	registry, err := n.SetUpMetricsHandler()
+	if err != nil {
+		n.logger.Error("Error setting up metrics handler", zap.Error(err))
+		return err
+	}
+
+	n.registry = registry
+
+	// 实际运行时将去使能的组件去除
+	unregisterComponents(n)
 	for _, component := range n.components {
 		// 自己不能初始化自己
 		if component.GetName() == n.GetName() {

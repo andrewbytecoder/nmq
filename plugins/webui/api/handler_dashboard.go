@@ -11,13 +11,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/andrewbytecoder/nmq/internal/config/runtimecfg"
+	"github.com/andrewbytecoder/nmq/plugins/webui/ctx"
+	"github.com/andrewbytecoder/nmq/plugins/webui/routeinfoprovider"
+	"github.com/andrewbytecoder/nmq/plugins/webui/storage"
+	webui "github.com/andrewbytecoder/nmq/plugins/webui/ui"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"ysp.com/ncp/ncp/internal/runtimecfg"
-	"ysp.com/ncp/ncp/plugins/webui/ctx"
-	"ysp.com/ncp/ncp/plugins/webui/routeinfoprovider"
-	"ysp.com/ncp/ncp/plugins/webui/storage"
-	webui "ysp.com/ncp/ncp/plugins/webui/ui"
 )
 
 type Config struct {
