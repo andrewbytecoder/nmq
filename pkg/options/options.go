@@ -4,4 +4,4 @@ package options
 
 // Option 选项模式
 // Option(*Config{})
-type Option func(o interface{})
+type Option func(o any)

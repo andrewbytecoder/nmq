@@ -1,8 +1,30 @@
 package dynamic
 
 import (
+	"time"
+
 	"github.com/andrewbytecoder/nmq/pkg/types"
 	"google.golang.org/grpc/codes"
+)
+
+const (
+	// DefaultHealthCheckInterval is the default value for the ServerHealthCheck interval.
+	DefaultHealthCheckInterval = types.Duration(30 * time.Second)
+	// DefaultHealthCheckTimeout is the default value for the ServerHealthCheck timeout.
+	DefaultHealthCheckTimeout = types.Duration(5 * time.Second)
+
+	// DefaultPassHostHeader is the default value for the ServersLoadBalancer passHostHeader.
+	DefaultPassHostHeader = true
+
+	// DefaultFlushInterval is the default value for the ResponseForwarding flush interval.
+	DefaultFlushInterval = types.Duration(100 * time.Millisecond)
+
+	// MirroringDefaultMirrorBody is the Mirroring.MirrorBody option default value.
+	MirroringDefaultMirrorBody = true
+	// MirroringDefaultMaxBodySize is the Mirroring.MaxBodySize option default value.
+	MirroringDefaultMaxBodySize int64 = -1
+	// FailoverErrorsDefaultMaxRequestBodyBytes is the Failover.Errors.MaxBodySize option default value.
+	FailoverErrorsDefaultMaxRequestBodyBytes int64 = -1
 )
 
 // +k8s:deepcopy-gen=true

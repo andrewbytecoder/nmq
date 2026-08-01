@@ -9,3 +9,9 @@ type RuntimeCfg struct {
 	Server  Server
 	DirInfo DirInfo
 }
+
+// Status of the servers.
+const (
+	StatusUp   = "UP"
+	StatusDown = "DOWN"
+)
