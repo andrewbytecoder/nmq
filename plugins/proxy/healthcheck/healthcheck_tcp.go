@@ -1,5 +1,7 @@
 package healthcheck
 
+import "github.com/andrewbytecoder/nmq/plugins/proxy/tcp"
+
 // maxPayloadSize is the maximum payload size that can be sent during health checks.
 const maxPayloadSize = 65535
 

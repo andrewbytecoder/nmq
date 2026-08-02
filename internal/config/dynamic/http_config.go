@@ -268,3 +268,13 @@ type Server struct {
 	Scheme string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 	Port   string `json:"-" toml:"-" yaml:"-" file:"-" kv:"-"`
 }
+
+// +k8s:deepcopy-gen=true
+
+// Spiffe holds the SPIFFE configuration.
+type Spiffe struct {
+	// IDs defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain).
+	IDs []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
+	// TrustDomain defines the allowed SPIFFE trust domain.
+	TrustDomain string `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" toml:"trustDomain,omitempty" yaml:"trustDomain,omitempty"`
+}
