@@ -1,0 +1,109 @@
+package runtimecfg
+
+import (
+	"maps"
+	"slices"
+	"sync"
+
+	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
+)
+
+// TCPServiceInfo holds information about a currently running TCP service.
+type TCPServiceInfo struct {
+	*dynamic.TCPService // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
+	// Status reports whether the service is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers using that service
+
+	serverStatusMu sync.RWMutex
+	serverStatus   map[string]string // keyed by server address
+}
+
+// AddError adds err to s.Err, if it does not already exist.
+// If critical is set, s is marked as disabled.
+func (s *TCPServiceInfo) AddError(err error, critical bool) {
+	if slices.Contains(s.Err, err.Error()) {
+		return
+	}
+
+	s.Err = append(s.Err, err.Error())
+	if critical {
+		s.Status = StatusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if s.Status != StatusDisabled {
+		s.Status = StatusWarning
+	}
+}
+
+// UpdateServerStatus sets the status of the server in the TCPServiceInfo.
+func (s *TCPServiceInfo) UpdateServerStatus(server, status string) {
+	s.serverStatusMu.Lock()
+	defer s.serverStatusMu.Unlock()
+
+	if s.serverStatus == nil {
+		s.serverStatus = make(map[string]string)
+	}
+	s.serverStatus[server] = status
+}
+
+// GetAllStatus returns all the statuses of all the servers in TCPServiceInfo.
+func (s *TCPServiceInfo) GetAllStatus() map[string]string {
+	s.serverStatusMu.RLock()
+	defer s.serverStatusMu.RUnlock()
+
+	if len(s.serverStatus) == 0 {
+		return nil
+	}
+
+	allStatus := make(map[string]string, len(s.serverStatus))
+	maps.Copy(allStatus, s.serverStatus)
+	return allStatus
+}
+
+// TCPRouterInfo holds information about a currently running TCP router.
+type TCPRouterInfo struct {
+	*dynamic.TCPRouter // dynamic configuration
+
+	Err []string `json:"error,omitempty"` // initialization error
+	// Status reports whether the router is disabled, in a warning state, or all good (enabled).
+	// If not in "enabled" state, the reason for it should be in the list of Err.
+	// It is the caller's responsibility to set the initial status.
+	Status string   `json:"status,omitempty"`
+	Using  []string `json:"using,omitempty"` // Effective entry points used by that router.
+}
+
+// AddError adds err to r.Err, if it does not already exist.
+// If critical is set, r is marked as disabled.
+func (r *TCPRouterInfo) AddError(err error, critical bool) {
+	if slices.Contains(r.Err, err.Error()) {
+		return
+	}
+
+	r.Err = append(r.Err, err.Error())
+	if critical {
+		r.Status = StatusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if r.Status != StatusDisabled {
+		r.Status = StatusWarning
+	}
+}
+
+// TCPMiddlewareInfo holds information about a currently running middleware.
+type TCPMiddlewareInfo struct {
+	*dynamic.TCPMiddleware // dynamic configuration
+
+	// Err contains all the errors that occurred during service creation.
+	Err    []string `json:"error,omitempty"`
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of TCP routers and services using that middleware.
+}

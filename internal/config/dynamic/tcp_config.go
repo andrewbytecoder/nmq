@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"github.com/andrewbytecoder/nmq/pkg/types"
+	"github.com/andrewbytecoder/nmq/plugins/proxy/tls"
 )
 
 // +k8s:deepcopy-gen=true
@@ -44,7 +45,7 @@ type TLSClientConfig struct {
 	ServerName         string                `description:"Defines the serverName used to contact the server." json:"serverName,omitempty" toml:"serverName,omitempty" yaml:"serverName,omitempty"`
 	InsecureSkipVerify bool                  `description:"Disables SSL certificate verification." json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
 	RootCAs            []types.FileOrContent `description:"Defines a list of CA certificates used to validate server certificates." json:"rootCAs,omitempty" toml:"rootCAs,omitempty" yaml:"rootCAs,omitempty"`
-	Certificates       types.Certificates    `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
+	Certificates       tls.Certificates      `description:"Defines a list of client certificates for mTLS." json:"certificates,omitempty" toml:"certificates,omitempty" yaml:"certificates,omitempty" export:"true"`
 	// Deprecated: PeerCertURI is deprecated, please use the PeerCertSANs option instead.
 	PeerCertURI  string      `description:"Defines the URI used to match against SAN URI during the peer certificate verification." json:"peerCertURI,omitempty" toml:"peerCertURI,omitempty" yaml:"peerCertURI,omitempty"`
 	PeerCertSANs []types.SAN `description:"Defines the SANs (Subject Alternative Names) used to match against SANs during the peer certificate verification." json:"peerCertSANs,omitempty" toml:"peerCertSANs,omitempty" yaml:"peerCertSANs,omitempty"`
@@ -91,6 +92,54 @@ type TCPServerHealthCheck struct {
 	Interval          types.Duration  `json:"interval,omitempty" toml:"interval,omitempty" yaml:"interval,omitempty" export:"true"`
 	UnhealthyInterval *types.Duration `json:"unhealthyInterval,omitempty" toml:"unhealthyInterval,omitempty" yaml:"unhealthyInterval,omitempty" export:"true"`
 	Timeout           types.Duration  `json:"timeout,omitempty" toml:"timeout,omitempty" yaml:"timeout,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPService holds a tcp service configuration (can only be of one type at the same time).
+type TCPService struct {
+	LoadBalancer *TCPServersLoadBalancer `json:"loadBalancer,omitempty" toml:"loadBalancer,omitempty" yaml:"loadBalancer,omitempty" export:"true"`
+	Weighted     *TCPWeightedRoundRobin  `json:"weighted,omitempty" toml:"weighted,omitempty" yaml:"weighted,omitempty" label:"-" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPWeightedRoundRobin is a weighted round robin tcp load-balancer of services.
+type TCPWeightedRoundRobin struct {
+	Services    []TCPWRRService `json:"services,omitempty" toml:"services,omitempty" yaml:"services,omitempty" export:"true"`
+	HealthCheck *HealthCheck    `json:"healthCheck,omitempty" toml:"healthCheck,omitempty" yaml:"healthCheck,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPWRRService is a reference to a tcp service load-balanced with weighted round robin.
+type TCPWRRService struct {
+	Name   string `json:"name,omitempty" toml:"name,omitempty" yaml:"name,omitempty" export:"true"`
+	Weight *int   `json:"weight,omitempty" toml:"weight,omitempty" yaml:"weight,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// TCPRouter holds the router configuration.
+type TCPRouter struct {
+	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Rule        string   `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
+	RuleSyntax string              `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
+	Priority   int                 `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
+	TLS        *RouterTCPTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterTCPTLSConfig holds the TLS configuration for a router.
+type RouterTCPTLSConfig struct {
+	Passthrough  bool           `json:"passthrough" toml:"passthrough" yaml:"passthrough" export:"true"`
+	Options      string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	CertResolver string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains      []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
 }
 
 //

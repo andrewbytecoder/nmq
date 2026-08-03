@@ -22,7 +22,7 @@ type Proxy struct {
 
 // NewProxy 创建一个新的 TCP 代理实例。
 // address 是后端服务器地址，dialer 负责建立到后端的连接。
-func NewProxy(address string, dialer Dialer, log *zap.Logger) (*Proxy, error) {
+func NewProxy(log *zap.Logger, address string, dialer Dialer) (*Proxy, error) {
 	return &Proxy{
 		address: address,
 		dialer:  dialer,
@@ -39,7 +39,7 @@ func NewProxy(address string, dialer Dialer, log *zap.Logger) (*Proxy, error) {
 //  4. connCopy 内部会触发优雅关闭（FIN + TerminationDelay）
 //  5. 等待另一个方向也结束
 //  6. 返回
-func (p *Proxy) ServeTCP(conn WriteCloser) error {
+func (p *Proxy) ServeTCP(conn WriteCloser) {
 	p.log.Debug("ServeTCP", zap.String("remote", conn.RemoteAddr().String()),
 		zap.String("address", p.address),
 		zap.String("local", conn.LocalAddr().String()))
@@ -55,7 +55,7 @@ func (p *Proxy) ServeTCP(conn WriteCloser) error {
 	// 判断拨号是否失败：失败时记录错误并返回，客户端连接由 defer conn.Close() 关闭。
 	if err != nil {
 		p.log.Error("dial backend error", zap.Error(err))
-		return err
+		return
 	}
 	// 确保后端连接在 ServeTCP 返回后被关闭。
 	// 正常情况下后端连接会在 connCopy 中被 CloseWrite 关闭，
@@ -102,7 +102,6 @@ func (p *Proxy) ServeTCP(conn WriteCloser) error {
 	<-errChan
 
 	// ServeTCP 返回后，两个 defer 会分别关闭客户端和后端连接。
-	return nil
 }
 
 // dialBackend 通过 Dialer 拨号到后端地址。

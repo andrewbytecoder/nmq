@@ -1,87 +1,16 @@
 package types
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"slices"
 	"strings"
 )
-
-// Certificates defines traefik certificates type
-// Certs and Keys could be either a file path, or the file content itself.
-type Certificates []Certificate
-
-// GetCertificates retrieves the certificates as slice of tls.Certificate.
-func (c Certificates) GetCertificates() []tls.Certificate {
-	var certs []tls.Certificate
-
-	for _, certificate := range c {
-		cert, err := certificate.GetCertificate()
-		if err != nil {
-			//log.Debug().Err(err).Msg("Error while getting certificate")
-			continue
-		}
-
-		certs = append(certs, cert)
-	}
-
-	return certs
-}
-
-// Certificate holds a SSL cert/key pair
-// Certs and Key could be either a file path, or the file content itself.
-type Certificate struct {
-	CertFile FileOrContent `json:"certFile,omitempty" toml:"certFile,omitempty" yaml:"certFile,omitempty"`
-	KeyFile  FileOrContent `json:"keyFile,omitempty" toml:"keyFile,omitempty" yaml:"keyFile,omitempty" loggable:"false"`
-}
-
-// GetCertificate returns a tls.Certificate matching the configured CertFile and KeyFile.
-func (c *Certificate) GetCertificate() (tls.Certificate, error) {
-	certContent, err := c.CertFile.Read()
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read CertFile: %w", err)
-	}
-
-	keyContent, err := c.KeyFile.Read()
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to read KeyFile: %w", err)
-	}
-
-	cert, err := tls.X509KeyPair(certContent, keyContent)
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
-	}
-
-	return cert, nil
-}
-
-const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
-
-// GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
-// It assumes that the configured CertFile and KeyFile are of byte type.
-func (c *Certificate) GetCertificateFromBytes() (tls.Certificate, error) {
-	cert, err := tls.X509KeyPair([]byte(c.CertFile), []byte(c.KeyFile))
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("unable to parse TLS certificate: %w", err)
-	}
-
-	return cert, nil
-}
-
-// GetTruncatedCertificateName truncates the certificate name.
-func (c *Certificate) GetTruncatedCertificateName() string {
-	certName := c.CertFile.String()
-
-	// Truncate certificate information only if it's a well formed certificate content with more than 50 characters
-	if !c.CertFile.IsPath() && strings.HasPrefix(certName, certificateHeader) && len(certName) > len(certificateHeader)+50 {
-		certName = strings.TrimPrefix(c.CertFile.String(), certificateHeader)[:50]
-	}
-
-	return certName
-}
 
 // SANType is the type of the Subject Alternative Name.
 type SANType string
@@ -162,4 +91,92 @@ func verifyChain(rootCAs *x509.CertPool, rawCerts [][]byte) (*x509.Certificate, 
 	}
 
 	return certs[0], nil
+}
+
+// +k8s:deepcopy-gen=true
+
+// ClientTLS holds TLS specific configurations as client
+// CA, Cert and Key can be either path or file contents.
+type ClientTLS struct {
+	CA                 string `description:"TLS CA" json:"ca,omitempty" toml:"ca,omitempty" yaml:"ca,omitempty"`
+	Cert               string `description:"TLS cert" json:"cert,omitempty" toml:"cert,omitempty" yaml:"cert,omitempty"`
+	Key                string `description:"TLS key" json:"key,omitempty" toml:"key,omitempty" yaml:"key,omitempty" loggable:"false"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify" json:"insecureSkipVerify,omitempty" toml:"insecureSkipVerify,omitempty" yaml:"insecureSkipVerify,omitempty" export:"true"`
+}
+
+// CreateTLSConfig creates a TLS config from ClientTLS structures.
+func (c *ClientTLS) CreateTLSConfig(ctx context.Context) (*tls.Config, error) {
+	if c == nil {
+		return nil, nil
+	}
+
+	// Not initialized, to rely on system bundle.
+	var caPool *x509.CertPool
+
+	if c.CA != "" {
+		var ca []byte
+		if _, errCA := os.Stat(c.CA); errCA == nil {
+			var err error
+			ca, err = os.ReadFile(c.CA)
+			if err != nil {
+				return nil, fmt.Errorf("failed to read CA. %w", err)
+			}
+		} else {
+			ca = []byte(c.CA)
+		}
+
+		caPool = x509.NewCertPool()
+		if !caPool.AppendCertsFromPEM(ca) {
+			return nil, errors.New("failed to parse CA")
+		}
+	}
+
+	hasCert := len(c.Cert) > 0
+	hasKey := len(c.Key) > 0
+
+	if hasCert != hasKey {
+		return nil, errors.New("both TLS cert and key must be defined")
+	}
+
+	if !hasCert || !hasKey {
+		return &tls.Config{
+			RootCAs:            caPool,
+			InsecureSkipVerify: c.InsecureSkipVerify,
+		}, nil
+	}
+
+	cert, err := loadKeyPair(c.Cert, c.Key)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caPool,
+		InsecureSkipVerify: c.InsecureSkipVerify,
+	}, nil
+}
+
+func loadKeyPair(cert, key string) (tls.Certificate, error) {
+	keyPair, err := tls.X509KeyPair([]byte(cert), []byte(key))
+	if err == nil {
+		return keyPair, nil
+	}
+
+	_, err = os.Stat(cert)
+	if err != nil {
+		return tls.Certificate{}, errors.New("cert file does not exist")
+	}
+
+	_, err = os.Stat(key)
+	if err != nil {
+		return tls.Certificate{}, errors.New("key file does not exist")
+	}
+
+	keyPair, err = tls.LoadX509KeyPair(cert, key)
+	if err != nil {
+		return tls.Certificate{}, err
+	}
+
+	return keyPair, nil
 }

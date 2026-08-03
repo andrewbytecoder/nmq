@@ -8,13 +8,6 @@ import (
 	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
 )
 
-// Status of the router/service.
-const (
-	StatusEnabled  = "enabled"
-	StatusDisabled = "disabled"
-	StatusWarning  = "warning"
-)
-
 // ServiceInfo holds information about a currently running service.
 type ServiceInfo struct {
 	*dynamic.Service // dynamic configuration
@@ -73,4 +66,14 @@ func (s *ServiceInfo) GetAllStatus() map[string]string {
 	}
 
 	return maps.Clone(s.serverStatus)
+}
+
+// MiddlewareInfo holds information about a currently running middleware.
+type MiddlewareInfo struct {
+	*dynamic.Middleware // dynamic configuration
+
+	// Err contains all the errors that occurred during service creation.
+	Err    []string `json:"error,omitempty"`
+	Status string   `json:"status,omitempty"`
+	UsedBy []string `json:"usedBy,omitempty"` // list of routers and services using that middleware.
 }

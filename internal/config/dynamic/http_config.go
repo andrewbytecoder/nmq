@@ -3,6 +3,7 @@ package dynamic
 import (
 	"time"
 
+	"github.com/andrewbytecoder/nmq/internal/config/dynamic/ext"
 	"github.com/andrewbytecoder/nmq/pkg/types"
 	"google.golang.org/grpc/codes"
 )
@@ -277,4 +278,70 @@ type Spiffe struct {
 	IDs []string `description:"Defines the allowed SPIFFE IDs (takes precedence over the SPIFFE TrustDomain)." json:"ids,omitempty" toml:"ids,omitempty" yaml:"ids,omitempty"`
 	// TrustDomain defines the allowed SPIFFE trust domain.
 	TrustDomain string `description:"Defines the allowed SPIFFE trust domain." json:"trustDomain,omitempty" toml:"trustDomain,omitempty" yaml:"trustDomain,omitempty"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Router holds the router configuration.
+type Router struct {
+	ext.Router `yaml:",inline"`
+
+	EntryPoints []string `json:"entryPoints,omitempty" toml:"entryPoints,omitempty" yaml:"entryPoints,omitempty" export:"true"`
+	Middlewares []string `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	Service     string   `json:"service,omitempty" toml:"service,omitempty" yaml:"service,omitempty" export:"true"`
+	Rule        string   `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
+	ParentRefs  []string `json:"parentRefs,omitempty" toml:"parentRefs,omitempty" yaml:"parentRefs,omitempty" label:"-" export:"true"`
+	// Deprecated: Please do not use this field and rewrite the router rules to use the v3 syntax.
+	RuleSyntax                  string                             `json:"ruleSyntax,omitempty" toml:"ruleSyntax,omitempty" yaml:"ruleSyntax,omitempty" export:"true"`
+	Priority                    int                                `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty" export:"true"`
+	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Observability               *RouterObservabilityConfig         `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	DefaultRule                 bool                               `json:"-" toml:"-" yaml:"-" label:"-" file:"-"`
+	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterTLSConfig holds the TLS configuration for a router.
+type RouterTLSConfig struct {
+	Options         string         `json:"options,omitempty" toml:"options,omitempty" yaml:"options,omitempty" export:"true"`
+	ResolvedOptions string         `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"false"`
+	CertResolver    string         `json:"certResolver,omitempty" toml:"certResolver,omitempty" yaml:"certResolver,omitempty" export:"true"`
+	Domains         []types.Domain `json:"domains,omitempty" toml:"domains,omitempty" yaml:"domains,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterDeniedEncodedPathCharacters configures which encoded characters are allowed in the request path.
+type RouterDeniedEncodedPathCharacters struct {
+	AllowEncodedSlash         bool `description:"Defines whether requests with encoded slash characters in the path are allowed." json:"allowEncodedSlash,omitempty" toml:"allowEncodedSlash,omitempty" yaml:"allowEncodedSlash,omitempty" export:"true"`
+	AllowEncodedBackSlash     bool `description:"Defines whether requests with encoded back slash characters in the path are allowed." json:"allowEncodedBackSlash,omitempty" toml:"allowEncodedBackSlash,omitempty" yaml:"allowEncodedBackSlash,omitempty" export:"true"`
+	AllowEncodedNullCharacter bool `description:"Defines whether requests with encoded null characters in the path are allowed." json:"allowEncodedNullCharacter,omitempty" toml:"allowEncodedNullCharacter,omitempty" yaml:"allowEncodedNullCharacter,omitempty" export:"true"`
+	AllowEncodedSemicolon     bool `description:"Defines whether requests with encoded semicolon characters in the path are allowed." json:"allowEncodedSemicolon,omitempty" toml:"allowEncodedSemicolon,omitempty" yaml:"allowEncodedSemicolon,omitempty" export:"true"`
+	AllowEncodedPercent       bool `description:"Defines whether requests with encoded percent characters in the path are allowed." json:"allowEncodedPercent,omitempty" toml:"allowEncodedPercent,omitempty" yaml:"allowEncodedPercent,omitempty" export:"true"`
+	AllowEncodedQuestionMark  bool `description:"Defines whether requests with encoded question mark characters in the path are allowed." json:"allowEncodedQuestionMark,omitempty" toml:"allowEncodedQuestionMark,omitempty" yaml:"allowEncodedQuestionMark,omitempty" export:"true"`
+	AllowEncodedHash          bool `description:"Defines whether requests with encoded hash characters in the path are allowed." json:"allowEncodedHash,omitempty" toml:"allowEncodedHash,omitempty" yaml:"allowEncodedHash,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// RouterObservabilityConfig holds the observability configuration for a router.
+type RouterObservabilityConfig struct {
+	// AccessLogs enables access logs for this router.
+	AccessLogs *bool `json:"accessLogs,omitempty" toml:"accessLogs,omitempty" yaml:"accessLogs,omitempty" export:"true"`
+	// Metrics enables metrics for this router.
+	Metrics *bool `json:"metrics,omitempty" toml:"metrics,omitempty" yaml:"metrics,omitempty" export:"true"`
+	// Tracing enables tracing for this router.
+	Tracing *bool `json:"tracing,omitempty" toml:"tracing,omitempty" yaml:"tracing,omitempty" export:"true"`
+}
+
+// +k8s:deepcopy-gen=true
+
+// Model holds model configuration.
+type Model struct {
+	Middlewares                 []string                           `json:"middlewares,omitempty" toml:"middlewares,omitempty" yaml:"middlewares,omitempty" export:"true"`
+	TLS                         *RouterTLSConfig                   `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty" file:"allowEmpty" kv:"allowEmpty" export:"true"`
+	Observability               RouterObservabilityConfig          `json:"observability,omitempty" toml:"observability,omitempty" yaml:"observability,omitempty" export:"true"`
+	DeniedEncodedPathCharacters *RouterDeniedEncodedPathCharacters `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
+	DefaultRuleSyntax           string                             `json:"-" toml:"-" yaml:"-" label:"-" file:"-" kv:"-" export:"true"`
 }
