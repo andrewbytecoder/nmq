@@ -124,7 +124,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			continue
 		}
 
-		if routerConfig.TLS.Passthrough!= nil {
+		if routerConfig.TLS.Passthrough {
 			m.log.Info("Add route for", zap.String("rule", routerConfig.Rule))
 
 			if err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
@@ -143,7 +143,7 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			// 保证domain中配置的都是ascii
 			asciiError := fmt.Errorf("invalid domain name value %q, non-ASCUU characters are not allowed", domain)
 			routerConfig.AddError(asciiError, true)
-			m.log.Error("add tcp tls rule failed", zap.Error(asciiError)
+			m.log.Error("add tcp tls rule failed", zap.Error(asciiError))
 		}
 
 		tlsOptionsName := routerConfig.TLS.Options
@@ -188,9 +188,9 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			continue
 		}
 
-		handler =&tcp.TLSHandler{
-			Next: handler,
-			Config: tlsConf,
+		handler = &tcp.TLSHandler{
+			Next:           handler,
+			Config:         tlsConf,
 			TLSOptionsName: tlsOptionsName,
 		}
 
