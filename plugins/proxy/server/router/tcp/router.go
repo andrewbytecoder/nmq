@@ -45,3 +45,13 @@ type Router struct {
 	// A nil config is the hint to set up a brokenTLSRouter.
 	hostHTTPTLSConfig map[string]tlsConfigWithOptionsName // TLS configs keyed by SNI
 }
+
+// brokenTLSRouter is associated to a Host(SNI) rule for which we know the TLS conf is broken.
+// It is used to make sure any attempt to connect to that hostname is closed,
+// since we cannot proceed with the intended TLS conf.
+type brokenTLSRouter struct{}
+
+// ServeTCP instantly closes the connection.
+func (t *brokenTLSRouter) ServeTCP(conn tcp.WriteCloser) {
+	_ = conn.Close()
+}

@@ -8,6 +8,45 @@ import (
 	"github.com/andrewbytecoder/nmq/pkg/types"
 )
 
+var (
+	// MinVersion Map of allowed TLS minimum versions.
+	MinVersion = map[string]uint16{
+		`VersionTLS10`: tls.VersionTLS10,
+		`VersionTLS11`: tls.VersionTLS11,
+		`VersionTLS12`: tls.VersionTLS12,
+		`VersionTLS13`: tls.VersionTLS13,
+	}
+
+	// MaxVersion Map of allowed TLS maximum versions.
+	MaxVersion = map[string]uint16{
+		`VersionTLS10`: tls.VersionTLS10,
+		`VersionTLS11`: tls.VersionTLS11,
+		`VersionTLS12`: tls.VersionTLS12,
+		`VersionTLS13`: tls.VersionTLS13,
+	}
+
+	// CurveIDs is a Map of TLS elliptic curves from crypto/tls
+	// Available CurveIDs defined at https://godoc.org/crypto/tls#CurveID,
+	// also allowing rfc names defined at https://tools.ietf.org/html/rfc8446#section-4.2.7
+	CurveIDs = map[string]tls.CurveID{
+		`secp256r1`:      tls.CurveP256,
+		`CurveP256`:      tls.CurveP256,
+		`secp384r1`:      tls.CurveP384,
+		`CurveP384`:      tls.CurveP384,
+		`secp521r1`:      tls.CurveP521,
+		`CurveP521`:      tls.CurveP521,
+		`x25519`:         tls.X25519,
+		`X25519`:         tls.X25519,
+		`x25519mlkem768`: tls.X25519MLKEM768,
+		`X25519MLKEM768`: tls.X25519MLKEM768,
+		// Post-quantum hybrid key exchanges enabled by default since Go 1.26.
+		`secp256r1mlkem768`:  tls.SecP256r1MLKEM768,
+		`SecP256r1MLKEM768`:  tls.SecP256r1MLKEM768,
+		`secp384r1mlkem1024`: tls.SecP384r1MLKEM1024,
+		`SecP384r1MLKEM1024`: tls.SecP384r1MLKEM1024,
+	}
+)
+
 // Certificates defines traefik certificates type
 // Certs and Keys could be either a file path, or the file content itself.
 type Certificates []Certificate
@@ -55,8 +94,6 @@ func (c *Certificate) GetCertificate() (tls.Certificate, error) {
 
 	return cert, nil
 }
-
-const certificateHeader = "-----BEGIN CERTIFICATE-----\n"
 
 // GetCertificateFromBytes returns a tls.Certificate matching the configured CertFile and KeyFile.
 // It assumes that the configured CertFile and KeyFile are of byte type.

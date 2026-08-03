@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/andrewbytecoder/nmq/internal/config/runtimecfg"
+	"github.com/andrewbytecoder/nmq/plugins/proxy/muxer"
 	tcpmuxer "github.com/andrewbytecoder/nmq/plugins/proxy/muxer/tcp"
 	"github.com/andrewbytecoder/nmq/plugins/proxy/server/provider"
 	tcpservice "github.com/andrewbytecoder/nmq/plugins/proxy/server/service/tcp"
@@ -84,6 +85,120 @@ func (m *Manager) addTCPHandlers(ctx context.Context, configs map[string]*runtim
 			routerErr := fmt.Errorf("invalid rule: %q , %w", routerConfig.Rule, err)
 			routerConfig.AddError(routerErr, true)
 			m.log.Error("add tcp rule failed", zap.Error(err))
+			continue
+		}
+
+		// HostSNI Rule, but TLS not set on the router, which is an error
+		// However, we allow the HostSNI(*) exception
+		if len(domains) > 0 && routerConfig.TLS == nil && domains[0] != "*" {
+			routerErr := fmt.Errorf("invalid rule: %q , has HostSNI matcher, but no TLS on router", routerConfig.Rule)
+			routerConfig.AddError(routerErr, true)
+			m.log.Error("add tcp rule failed", zap.Error(routerErr))
+			continue
+		}
+
+		if routerConfig.Priority > maxUserPriority && !strings.HasSuffix(routerName, "@internal") {
+			routerErr := fmt.Errorf("the router priority %d exceeds the max user-defined priority %d", routerConfig.Priority, maxUserPriority)
+			routerConfig.AddError(routerErr, true)
+			m.log.Error("add tcp rule failed", zap.Error(routerErr))
+			continue
+		}
+
+		var handler tcp.Handler
+		if routerConfig.TLS == nil || routerConfig.TLS.Passthrough {
+			handler, err = m.buildTCPHandler(cxtRouter, routerConfig)
+			if err != nil {
+				routerConfig.AddError(err, true)
+				m.log.Error("add tcp handler failed", zap.Error(err))
+				continue
+			}
+		}
+
+		if routerConfig.TLS == nil {
+			m.log.Info("Add route for", zap.String("rule", routerConfig.Rule))
+
+			if err = router.muxerTCP.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
+				routerConfig.AddError(err, true)
+				m.log.Error("add tcp rule failed", zap.Error(err))
+			}
+			continue
+		}
+
+		if routerConfig.TLS.Passthrough!= nil {
+			m.log.Info("Add route for", zap.String("rule", routerConfig.Rule))
+
+			if err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
+				routerConfig.AddError(err, true)
+				m.log.Error("add tcp tls rule failed")
+			}
+			continue
+		}
+
+		for _, domain := range domains {
+			m.log.Info("Add route for", zap.String("rule", routerConfig.Rule))
+			if muxer.IsASCII(domain) {
+				continue
+			}
+
+			// 保证domain中配置的都是ascii
+			asciiError := fmt.Errorf("invalid domain name value %q, non-ASCUU characters are not allowed", domain)
+			routerConfig.AddError(asciiError, true)
+			m.log.Error("add tcp tls rule failed", zap.Error(asciiError)
+		}
+
+		tlsOptionsName := routerConfig.TLS.Options
+
+		if len(tlsOptionsName) == 0 {
+			tlsOptionsName = nmqtls.DefaultTLSConfigName
+		}
+
+		if tlsOptionsName != nmqtls.DefaultTLSConfigName {
+			tlsOptionsName = provider.GetQualifiedName(cxtRouter, tlsOptionsName)
+		}
+
+		tlsConf, err := m.tlsManager.Get(nmqtls.DefaultTLSStoreName, tlsOptionsName)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			m.log.Error("add tcp tls rule failed", zap.String(routerConfig.Rule, tlsOptionsName), zap.Error(err))
+
+			if err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), &brokenTLSRouter{}); err != nil {
+				routerConfig.AddError(err, true)
+				m.log.Error("add tcp tls rule failed", zap.Error(err))
+			}
+
+			continue
+		}
+
+		// Now that the Rule is not just about the Host, we could theoretically have a config like:
+		//	router1:
+		//		rule: HostSNI(foo.com) && ClientIP(IP1)
+		//		tlsOption: tlsOne
+		//	router2:
+		//		rule: HostSNI(foo.com) && ClientIP(IP2)
+		//		tlsOption: tlsTwo
+		// i.e. same HostSNI but different tlsOptions
+		// This is only applicable if the muxer can decide about the routing _before_ telling the client about the tlsConf (i.e. before the TLS HandShake).
+		// This seems to be the case so far with the existing matchers (HostSNI, and ClientIP), so it's all good.
+		// Otherwise, we would have to do as for HTTPS, i.e. disallow different TLS configs for the same HostSNIs.
+
+		handler, err = m.buildTCPHandler(cxtRouter, routerConfig)
+		if err != nil {
+			routerConfig.AddError(err, true)
+			m.log.Error("add tcp tls rule failed", zap.Error(err))
+			continue
+		}
+
+		handler =&tcp.TLSHandler{
+			Next: handler,
+			Config: tlsConf,
+			TLSOptionsName: tlsOptionsName,
+		}
+
+		m.log.Debug("Add route for", zap.String("rule", routerConfig.Rule), zap.String("tlsOptionsName", tlsOptionsName))
+
+		if err = router.muxerTCPTLS.AddRoute(routerConfig.Rule, routerConfig.RuleSyntax, routerConfig.Priority, providerName(routerName), handler); err != nil {
+			routerConfig.AddError(err, true)
+			m.log.Error("add tcp tls rule failed", zap.Error(err))
 			continue
 		}
 
