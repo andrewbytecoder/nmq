@@ -46,6 +46,38 @@ type Muxer struct {
 	providersPrecedence []string
 }
 
+// NewMuxer returns a TCP muxer.
+func NewMuxer(providersPrecedence []string) (*Muxer, error) {
+	var matcherNames []string
+	for matcherName := range tcpFuncs {
+		matcherNames = append(matcherNames, matcherName)
+	}
+
+	parser, err := rules.NewParser(matcherNames)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating rules parser: %w", err)
+	}
+
+	var matchersV2 []string
+	for matcher := range tcpFuncsV2 {
+		matchersV2 = append(matchersV2, matcher)
+	}
+
+	parserV2, err := rules.NewParser(matchersV2)
+	if err != nil {
+		return nil, fmt.Errorf("error while creating v2 rules parser: %w", err)
+	}
+
+	providersPrecedence = slices.Clone(providersPrecedence)
+	slices.Reverse(providersPrecedence)
+
+	return &Muxer{
+		parser:              parser,
+		parserV2:            parserV2,
+		providersPrecedence: providersPrecedence,
+	}, nil
+}
+
 // AddRoute adds a new route, associated to the given handler, at the given
 // priority, to the muxer.
 func (m *Muxer) AddRoute(rule string, syntax string, priority int, providerName string, handler tcp.Handler) error {

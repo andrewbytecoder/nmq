@@ -1,12 +1,67 @@
 package runtimecfg
 
 import (
+	"context"
+	"fmt"
 	"maps"
 	"slices"
+	"sort"
 	"sync"
 
 	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
 )
+
+// GetRoutersByEntryPoints returns all the http routers by entry points name and routers name.
+func (c *Configuration) GetRoutersByEntryPoints(ctx context.Context, entryPoints []string, tls bool) map[string]map[string]*RouterInfo {
+	entryPointsRouters := make(map[string]map[string]*RouterInfo)
+
+	for rtName, rt := range c.Routers {
+		if (tls && rt.TLS == nil) || (!tls && rt.TLS != nil) {
+			continue
+		}
+
+		entryPointsCount := 0
+		for _, entryPointName := range rt.EntryPoints {
+			if !slices.Contains(entryPoints, entryPointName) {
+				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
+				continue
+			}
+
+			if _, ok := entryPointsRouters[entryPointName]; !ok {
+				entryPointsRouters[entryPointName] = make(map[string]*RouterInfo)
+			}
+
+			entryPointsCount++
+			rt.Using = append(rt.Using, entryPointName)
+
+			entryPointsRouters[entryPointName][rtName] = rt
+		}
+
+		// Root routers must have at least one entry point.
+		if entryPointsCount == 0 && rt.ParentRefs == nil {
+		}
+
+		rt.Using = unique(rt.Using)
+	}
+
+	return entryPointsRouters
+}
+
+func unique(src []string) []string {
+	var uniq []string
+
+	set := make(map[string]struct{})
+	for _, v := range src {
+		if _, exist := set[v]; !exist {
+			set[v] = struct{}{}
+			uniq = append(uniq, v)
+		}
+	}
+
+	sort.Strings(uniq)
+
+	return uniq
+}
 
 // ServiceInfo holds information about a currently running service.
 type ServiceInfo struct {

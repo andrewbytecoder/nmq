@@ -1,6 +1,10 @@
 package runtimecfg
 
-import "github.com/andrewbytecoder/nmq/internal/config/dynamic"
+import (
+	"slices"
+
+	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
+)
 
 // Configuration holds the information about the currently running traefik instance.
 type Configuration struct {
@@ -31,4 +35,23 @@ type RouterInfo struct {
 	// This field is only filled during multi-layer routing computation of parentRefs,
 	// and used when building the runtime configuration.
 	ChildRefs []string `json:"-"`
+}
+
+// AddError adds err to r.Err, if it does not already exist.
+// If critical is set, r is marked as disabled.
+func (r *RouterInfo) AddError(err error, critical bool) {
+	if slices.Contains(r.Err, err.Error()) {
+		return
+	}
+
+	r.Err = append(r.Err, err.Error())
+	if critical {
+		r.Status = StatusDisabled
+		return
+	}
+
+	// only set it to "warning" if not already in a worse state
+	if r.Status != StatusDisabled {
+		r.Status = StatusWarning
+	}
 }

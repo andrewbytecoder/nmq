@@ -1,12 +1,46 @@
 package runtimecfg
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"sync"
 
 	"github.com/andrewbytecoder/nmq/internal/config/dynamic"
 )
+
+// GetTCPRoutersByEntryPoints returns all the tcp routers by entry points name and routers name.
+func (c *Configuration) GetTCPRoutersByEntryPoints(ctx context.Context, entryPoints []string) map[string]map[string]*TCPRouterInfo {
+	entryPointsRouters := make(map[string]map[string]*TCPRouterInfo)
+
+	for rtName, rt := range c.TCPRouters {
+
+		entryPointsCount := 0
+		for _, entryPointName := range rt.EntryPoints {
+			if !slices.Contains(entryPoints, entryPointName) {
+				rt.AddError(fmt.Errorf("entryPoint %q doesn't exist", entryPointName), false)
+				continue
+			}
+
+			if _, ok := entryPointsRouters[entryPointName]; !ok {
+				entryPointsRouters[entryPointName] = make(map[string]*TCPRouterInfo)
+			}
+
+			entryPointsCount++
+			rt.Using = append(rt.Using, entryPointName)
+
+			entryPointsRouters[entryPointName][rtName] = rt
+		}
+
+		if entryPointsCount == 0 {
+			rt.AddError(errors.New("no valid entryPoint for this router"), true)
+		}
+	}
+
+	return entryPointsRouters
+}
 
 // TCPServiceInfo holds information about a currently running TCP service.
 type TCPServiceInfo struct {
